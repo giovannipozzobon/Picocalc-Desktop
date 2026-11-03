@@ -14,8 +14,7 @@ used with a real keyboard, a mouse and a monitor.
   clicks are the next step.
 
 The repository holds both halves: the shell's firmware (C, Pico SDK) and the
-FPGA's gateware (Verilog, Gowin EDA). It is picocalc-shell's branch
-`m15-hdmi` plus the FPGA project that was `pico_tang20k_hdmi`.
+FPGA's gateware (Verilog, Gowin EDA).
 
 | What | Where |
 |---|---|
