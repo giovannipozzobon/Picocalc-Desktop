@@ -259,12 +259,6 @@ build/host/shell-dos card.img    # the DOS flavour
   every command, the command line, vi and the card.
 - [docs/user-guide-dos.md](docs/user-guide-dos.md): the DOS flavour, for
   users: every command, batch files, EDIT and the card.
-- [docs/design.md](docs/design.md): the design, its settled decisions and
-  the milestones.
-- [docs/hardware-notes.md](docs/hardware-notes.md): the PicoCalc's
-  hardware, as measured.
-- [docs/milestones.md](docs/milestones.md): what each milestone checked,
-  on which board.
 
 ## Licence
 

@@ -19,9 +19,6 @@ FPGA's gateware (Verilog, Gowin EDA).
 | What | Where |
 |---|---|
 | The shell: commands, install, the two flavours | [SHELL.md](SHELL.md), [docs/user-guide-unix.md](docs/user-guide-unix.md), [docs/user-guide-dos.md](docs/user-guide-dos.md) |
-| Design, settled decisions, milestones | [docs/design.md](docs/design.md) (HDMI §3.11, Bluetooth §3.10, mouse §3.12), [docs/milestones.md](docs/milestones.md) |
-| The PicoCalc's hardware, measured | [docs/hardware-notes.md](docs/hardware-notes.md) (the HDMI link: §8.7) |
-| The link's protocol, the FPGA's notes | [docs/fpga/hdmi-mirror-protocol.md](docs/fpga/hdmi-mirror-protocol.md), [docs/fpga/phases.md](docs/fpga/phases.md) (Italian) |
 | Code from other projects, licences | [THIRD-PARTY.md](THIRD-PARTY.md) |
 
 ## What you need
@@ -79,7 +76,7 @@ tools/test-fpga.sh                      # the testbenches (Icarus Verilog); mirr
 | Target | What it is |
 |---|---|
 | `mirror` | the mirror: QSPI link, decoder, SDRAM frame memory, HDMI. The one to use |
-| `linktest` | tests the link's wiring and speed with a pseudo-random sequence (the Pico's side of it is not in this repository: see [docs/fpga/phases.md](docs/fpga/phases.md)) |
+| `linktest` | tests the link's wiring and speed with a pseudo-random sequence (the Pico's side of it is not in this repository) |
 | `bars480`, `bars720` | colour bars on HDMI, to check the monitor and the board alone |
 
 The synthesis is for the device `GW2AR-LV18QN88C8/I7`, the Tang Nano 20K's.
@@ -142,7 +139,7 @@ If a device stops connecting, pair it again: it forgets the PicoCalc when it is
 put in pairing mode elsewhere. In the shell, the mouse's wheel scrolls the
 history, `more`, vi and EDIT. Low Energy (BLE) devices, the mouse and the
 keyboard together, and a keyboard's trackpad as a mouse have not all been
-checked on the board (see [docs/milestones.md](docs/milestones.md)).
+checked on the board.
 
 ## Test programs
 
@@ -168,11 +165,10 @@ it shows and how to use it.
   Tang Nano 20K, to raise the link from 15 MHz to 20-25 MHz. On loose wires
   with no series resistors the link carried 1 MiB with no errors at 1, 5, 10
   and 15 MHz and failed at 20 MHz, even with a shorter glitch filter
-  (`FILT=2`); [docs/fpga/phases.md](docs/fpga/phases.md) proposes trying
-  20-25 MHz with series resistors and `FILT=1` (`FILT=1 tools/build-fpga.sh
-  linktest`).
+  (`FILT=2`). 20-25 MHz is to be tried with series resistors and `FILT=1`
+  (`FILT=1 tools/build-fpga.sh linktest`).
 - **The mouse in the shell.** A pointer on the screen and clicks at the
-  prompt, in vi, EDIT and the menus (design.md §3.12, M16 steps 2 and 3).
+  prompt, in vi, EDIT and the menus.
 
 ## Licence
 

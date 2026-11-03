@@ -1,7 +1,6 @@
 // PicoCalc HDMI Mirror - cmd_decoder: emulazione del sottoinsieme ST7365P
 //
-// Consuma il flusso di byte di qspi_rx (docs/fpga/hdmi-mirror-protocol.md sez. 4 e
-// 6) e produce scritture di pixel nella memoria del display (320 x 480) piu'
+// Consuma il flusso di byte di qspi_rx e produce scritture di pixel nella memoria del display (320 x 480) piu'
 // i registri che servono al lato video (scroll, inversione, display on/off).
 //
 // Pacchetti: tipo 0x00 CMD (1 byte: codice comando), 0x01 DATA (N byte di

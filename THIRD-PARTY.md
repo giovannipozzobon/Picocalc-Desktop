@@ -35,7 +35,7 @@ The same licence as this project, and the same owner.
 ## picocalc-extras — MIT
 
 Copyright (c) 2026 Chris Torkildson, under the MIT licence, which is
-compatible with the GPL-3.0. Its Bluetooth keyboard (design.md §3.10). Checked
+compatible with the GPL-3.0. Its Bluetooth keyboard. Checked
 against v1.3 (2026-10-31): the files taken are unchanged since v1.2, and
 the fix switches of v1.3's `bluetooth.cmake` are here. `btkbd.c` and
 `btkbd.h` brought to btpair 2.1 (a keyboard and a mouse) on 2026-11-02.
@@ -63,7 +63,7 @@ Blair Leduc, under the MIT licence, which is compatible with the GPL-3.0.
 
 The owner's project for an HDMI mirror of the panel on a Tang Nano 20K; its
 Pico side is a copy of `picocalc-text-starter` (MIT, above) with the link
-added. Only the Pico side is used here (design.md §3.11); the FPGA's
+added. Only the Pico side is used here; the FPGA's
 gateware is not.
 
 | Here | From pico_tang20k_hdmi | Changes |
@@ -76,7 +76,7 @@ gateware is not.
 ## Pico Logo — MIT, the owner's
 
 Copyright (c) 2025-2026 Blair Leduc, under the MIT licence, which is
-compatible with the GPL-3.0. Its vi key layer (design.md §4.6).
+compatible with the GPL-3.0. Its vi key layer.
 
 | Here | From Pico Logo | Changes |
 |---|---|---|
@@ -96,14 +96,14 @@ pelrun in 2025.
 
 | Here | From UF2 Loader | Changes |
 |---|---|---|
-| `src/core/uf2.c`, `uf2.h` | `ui/uf2.c` | its block rules, rebuilt as a check of the whole file before flash is touched and a write of only the sectors that differ (design.md §3.3) |
+| `src/core/uf2.c`, `uf2.h` | `ui/uf2.c` | its block rules, rebuilt as a check of the whole file before flash is touched and a write of only the sectors that differ |
 | `src/port/loader.c` | `common/bootloader/proginfo.c`, `ui/uf2.c` | the scratch commands, the flash end, the partition and the remap; erasing and programming through the bootrom |
-| `include/picocalc_shell.h` | `common/bootloader/proginfo.c` | the `BOOT_SD` command's values only; the header is offered under the MIT licence as well (design.md §9) |
+| `include/picocalc_shell.h` | `common/bootloader/proginfo.c` | the `BOOT_SD` command's values only; the header is offered under the MIT licence as well |
 | `src/port/usbdisk.c` | `ui/lib/usb_msc/usb_msc.c` | its MSC callbacks; an eject ends the run, and a card taken out |
 | `src/port/usb_descriptors.c` | `ui/lib/usb_msc/usb_descriptors.c` | the same numbers and strings; the full-speed descriptor only, the serial number through the SDK |
 | `src/port/tusb_config.h` | `ui/lib/usb_msc/tusb_config.h` | comments and unused options dropped |
 | `third_party/uf2loader` | the whole loader, a git submodule at v2.5 (`5c44a4b`) | none; `tools/build-loader.sh` builds stage3 from a copy |
-| `patches/uf2loader-boot-shell.patch` | `stage3/stage3.c`, `common/petit_fatfs/diskio.c`, `CMakeLists.txt` | M7 (design.md §10): the shell at power-on, a restart's watch for a key, the program in flash with no card, the card polled without sleeping, the version `2.5-shell` |
+| `patches/uf2loader-boot-shell.patch` | `stage3/stage3.c`, `common/petit_fatfs/diskio.c`, `CMakeLists.txt` | M7: the shell at power-on, a restart's watch for a key, the program in flash with no card, the card polled without sleeping, the version `2.5-shell` |
 
 The last three files started as TinyUSB's `msc` example (MIT, Copyright (c)
 2019 Ha Thach, tinyusb.org), which the loader adapted. TinyUSB itself is
@@ -112,7 +112,7 @@ not in the tree: the firmware links the Pico SDK's copy.
 ## The fonts — the owner's
 
 `src/core/font.h` is the owner's `references/fonts/font.h`, but for the fonts
-it declares (design.md §4.1). The owner's `font-8x10.c` is no longer built
+it declares. The owner's `font-8x10.c` is no longer built
 in, but its glyphs fill the DEC special graphics that code page 437 lacks,
 and glyph 0x7F, in both flavours' fonts.
 
@@ -129,7 +129,7 @@ in touch. Changes: the glyphs drawn in rows 1-8 of an 8x10 cell, and
 arranged as the terminal's 128 glyphs, with the DEC special graphics at 0x00-0x1F taken
 from its own code page 437 glyphs where it has them (the box-drawing ones
 carried into rows 0 and 9) and from the owner's `font-8x10.c` where it does
-not, and code page 437's upper half dropped (design.md §4.1).
+not, and code page 437's upper half dropped.
 
 ## The DOS flavour's font — VileR, CC BY-SA 4.0
 
@@ -140,7 +140,7 @@ the Creative Commons Attribution-ShareAlike 4.0 International License
 (https://creativecommons.org/licenses/by-sa/4.0/). Changes: the IBM PC BIOS
 8x8 glyphs are drawn in rows 1-8 of an 8x10 cell, the box-drawing glyphs
 carried into rows 0 and 9, and arranged as the terminal's 128 glyphs, with
-the owner's glyphs where code page 437 has none (design.md §4.7). This
+the owner's glyphs where code page 437 has none. This
 adaptation is licensed under CC BY-SA 4.0 as well, which Creative Commons
 declares one-way compatible with the GPL-3.0 the rest is under. Only the
 DOS flavour's firmware contains it.
@@ -178,7 +178,7 @@ under the SDK's BSD-3-Clause licence.
 
 ## ntp.uf2: the CYW43 driver, its firmware, and lwIP
 
-`ntp.uf2` (design.md §3.8), built only in the Pico 2 W build, links three
+`ntp.uf2`, built only in the Pico 2 W build, links three
 things from the Pico SDK that the shell itself does not. None is in the
 tree.
 

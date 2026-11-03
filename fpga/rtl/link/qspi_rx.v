@@ -1,6 +1,6 @@
 // PicoCalc HDMI Mirror - ricevitore QSPI unidirezionale Pico -> FPGA
 //
-// Protocollo: docs/fpga/hdmi-mirror-protocol.md sez. 4. Il Pico cambia D[3:0] sul
+// Il Pico cambia D[3:0] sul
 // fronte di discesa di SCK, la FPGA campiona sul fronte di salita. Ogni byte
 // viaggia in due cicli: prima il nibble alto, poi il basso. SCK fermo basso
 // con CS_N alto. Un pacchetto e' delimitato da CS_N basso -> alto.
