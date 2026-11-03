@@ -89,7 +89,7 @@ contatto col chip).
 
 ### Il caso particolare: i programmi in RAM
 
-Alcuni `.uf2` (come `web.uf2`, `ntp.uf2`, `btpair.uf2`) hanno indirizzi
+Alcuni `.uf2` (come `ntp.uf2`, `btpair.uf2`) hanno indirizzi
 nella **RAM**, non nella flash. Non c'è niente da scrivere. La shell lo
 vede dal controllo del passaggio 3 e passa al loader il comando
 `BOOT_RAM` con il percorso del file. Il loader legge allora il file dalla

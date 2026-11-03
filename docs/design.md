@@ -1,6 +1,6 @@
 # PicoCalc Shell — design
 
-Status: **Draft 16, 2026-11-02.** M16 (§3.12, the mouse in the shell) has its first step, the wheel, built. M15 (§3.11, an HDMI mirror) is done: the owner saw it work on the board. M13 (§3.9, steps 1-3) and M14 (§3.10) are done ([milestones.md](milestones.md)). Feasibility study and first design. M0
+Status: **Draft 16, 2026-11-02.** M16 (§3.12, the mouse in the shell) has its first step, the wheel, built. M15 (§3.11, an HDMI mirror) is done: the owner saw it work on the board. M14 (§3.10) is done ([milestones.md](milestones.md)). Feasibility study and first design. M0
 (the skeleton), M1 (files), M2 (run), M3 (vi), M4 (comfort), M6 (USB
 speed), M8 (the rest of v1), M9 (the DOS flavour) and M11 (menus) are done
 ([milestones.md](milestones.md)). There is no M5: *Exit to shell* in the
@@ -47,7 +47,6 @@ only open questions are M10's, a flash filesystem for programs to share
 | 2026-10-18 | Scripts and batch files can show menus (M11). The UNIX flavour has bash's `select NAME in WORDS; do LIST; done`, with `break`, `PS3` and `REPLY`, as its one compound command: no `if` or `case`, so a menu branches by running the word chosen. The DOS flavour has DOS 6's `CHOICE` with all its switches (`/C`, `/N`, `/S`, `/T`), for `IF ERRORLEVEL` and `GOTO`. | 4.4, 4.7, 10 |
 | 2026-10-25 | The shell does not load RAM UF2s itself or keep itself resident across one; stage3 loads them, after a reboot. M7's patched stage3 skips its 0.5 s wait for a key when a command is waiting, which takes most of the time out of each trip to a program and back. | 10 |
 | 2026-10-25 | Under M7, only a power-on gives the shell with no command; a program's `watchdog_reboot()` with no command restarts it, as under the stock loader. A restart loop is broken by holding Up/F1/F5 through the restart, which stage3 watches for after draining the FIFO, or by a power cycle. The commands in the watchdog's scratch registers stay stock 2.5's, so the shell and programs run the same under either loader (the owner). A RAM program restarts itself with `BOOT_RAM` and its own 8.3 path; its loop is broken only by a power cycle, since a command skips the watch for a key. | 10 |
-| 2026-10-30 | M13, a web file manager (§3.9): a RAM program, `web.uf2`, run by the W build's `web` builtin, as `ntp.uf2` is; it is a client of the network `/ntp/ntp.cfg` names, with no access point and no authentication for now; a file for the network alone may replace `ntp.cfg`'s later; its page is in English; its code and API come from PicoMultiLoader (the owner's, GPL-3.0). | 3.9, 10 |
 | 2026-10-30 | M14, a Bluetooth keyboard in the shell (§3.10): it goes in the existing Pico 2 W builds, not a third build; the Pico 2 W first; the BTstack licence is no obstacle (the owner); pairing is done by picocalc-extras' `btpair`, which is not rebuilt here, and the shell only reconnects, from `/bluetooth/pairing.dat`. | 3.10, 10 |
 | 2026-11-01 | M15, an HDMI mirror (§3.11): the owner's `pico_tang20k_hdmi` link (a Tang Nano 20K on J703) is a build option, `PICO_SHELL_HDMI`, not a third build or a default; the `hdmi` command is the owner's, resending the state and, here, redrawing the screen; the FPGA side is left as it is. It takes GP2-GP5, so it excludes the dev build's UART and the DS3231. | 3.11, 10 |
 | 2026-11-02 | M16, the mouse in the shell (§3.12): what `mouse-test` showed, by the owner: the pointer's gain is 0.5 pixel a count and there is **no acceleration**; the wheel's forward (positive) is Up. Steps: the wheel first, then a pointer on the screen and clicks. | 3.12, 10 |
@@ -942,13 +941,6 @@ above, or fills in what it left open):
 - `MEM` still shows its numbers without separators, so `COUNTRY` does
   not reach it.
 
-### 3.9 A web file manager (removed)
-
-picocalc-shell had a `web` builtin and `web.uf2` (M13). picocalc_desktop
-leaves them out: this repository keeps the HDMI mirror (§3.11) and the
-Bluetooth keyboard and mouse (§3.10, §3.12), with their test programs.
-The design is in picocalc-shell's history (branch `m13-web`).
-
 ### 3.10 A Bluetooth keyboard (M14)
 
 *Proposed 2026-10-30, with the owner's answers of the same day (the table
@@ -1031,8 +1023,8 @@ builds, nothing yet run on the board):*
   `cyw43_fw_read()`: the check of the blob's tail, the download in
   64-byte blocks, and the CLM blob; the NVRAM and everything else are read
   from memory as before. `fw_data` is an address no memory has
-  (`0xa0000000`). Targets built without the definition (`ntp.uf2`,
-  `web.uf2`) compile the original code from the same copy.
+  (`0xa0000000`). Targets built without the definition (`ntp.uf2`)
+  compile the original code from the same copy.
 - **`tools/cyw43-fw.py`** turns the SDK's array, the one the driver uses
   with Bluetooth (`wb43439A0_7_95_49_00_combined.h`: Wi-Fi 231,077 B and
   CLM 984 B), into `cyw43-fw.bin` (232,408 B: the Wi-Fi firmware padded to
@@ -1050,8 +1042,8 @@ builds, nothing yet run on the board):*
   the chip's address, lights the LED, and scans for networks, which needs
   the CLM too. As a RAM program it returns to the shell as `ntp.uf2` does, with `BOOT_SD`
   written by itself, since `picocalc_shell_exit()` only accepts a program in flash. It is 96 KB of RAM, where `ntp.uf2`, which holds the
-  firmware, is 366 KB. Streaming also gives `ntp.uf2` and `web.uf2` about
-  230 KB back, if they ever want it; they do not use it now.
+  firmware, is 366 KB. Streaming also gives `ntp.uf2` about
+  230 KB back, if it ever wants it; it does not use it now.
 - **The W builds are built for size.** `-Os` for everything, the SDK's
   and TinyUSB's code too, except the panel's and the card's drivers
   (`lcd.c`, `screen.c`, `sd.c`, `diskio.c`), whose loops are hot and keep
@@ -1065,8 +1057,7 @@ builds, nothing yet run on the board):*
   BTstack's `malloc` and the stack, a little under what the probe gave
   (44 KB), as the panel's and card's code stays at `-O3`. The pipes
   (2 x 16 KB), `ls`'s buffers and the argument text are the next room, 50 KB,
-  if the board says it is too little. `ntp.uf2` 366,160 B, `web.uf2`
-  458,036 B (both smaller too).
+  if the board says it is too little. `ntp.uf2` 366,160 B (smaller too).
 - **Checked on the board by the owner, 2026-10-30** (a Pico 2 W,
   `cyw43fw-test`, development build): the radio comes up from the file,
   with the address, the LED and a scan; the driver made 3,613 reads of
@@ -1167,7 +1158,7 @@ the board not yet):*
   on the card: a person who paired a keyboard asked for it, and with no
   pairing the radio is never touched, which is also what keeps a Pico 2
   with the W build out of the SMPS and VBUS pins. If a startup file runs a
-  program (`web`, say), the shell is left before the radio starts and
+  program (`ntp`, say), the shell is left before the radio starts and
   none is wasted on it. The prompt is not held up; typing meanwhile is
   kept by the southbridge's FIFO (31 keys), and the start takes the card
   for about a second (the firmware).
@@ -1179,7 +1170,7 @@ the board not yet):*
   each `kbd_poll()` (30 Hz), after the southbridge's, `btkbd_read()` is
   drained into the same ring, so `keys.c`, vi, EDIT, `more`, the line
   editor and Break/Esc see one keyboard. Programs that do not call it
-  (`ntp.uf2`, `web.uf2`, `exit-test`) have no Bluetooth keyboard: the
+  (`ntp.uf2`, `exit-test`) have no Bluetooth keyboard: the
   radio is gone when they start (the reboot), and the shell starts it
   again when it comes back.
 - **`btkbd_poll()`**, which saves a new pairing to the card, runs from the
@@ -1201,7 +1192,7 @@ the board not yet):*
     `bluetooth: <why>` when the firmware file is missing, the PicoCalc's
     own keyboard working all the while;
   - after `reboot` the Bluetooth keyboard is usable about 1 s after the
-    prompt, and about 2-3 s after coming back from `web`;
+    prompt, and about 2-3 s after coming back from a program;
   - **`usbdisk` with the radio on**, 8 MB each way to a Mac with
     `tools/usb-rate.py`: written 660 KB/s with Bluetooth, 663 without;
     **read 497 KB/s with, 612 without**, a fifth slower. The write is not
@@ -1300,7 +1291,7 @@ measured in the shell): redrawing costs +11.7% for a strip of pixels and
 at the prompt, in vi, scrolling past the frame memory's wrap, at power-on
 with the FPGA already up, and with it powered after (`hdmi`); the time a
 screenful and `ls` of a long directory take with and without the mirror;
-that `usbdisk`, `web` and a program run and back still work; and that a
+that `usbdisk` and a program run and back still work; and that a
 DOS-flavour and a W build both come up.
 
 ### 3.12 The mouse in the shell (M16)
@@ -2895,8 +2886,6 @@ in [milestones.md](milestones.md).
   Measure each flavour's RAM, `ntp.uf2`'s size and its time from Enter to
   the prompt. (*The owner, 2026-10-23:* the AON timer's drift against NTP
   is not measured: the clock is for general use.)
-
-- **M13 — A web file manager** (picocalc-shell only; not carried into picocalc_desktop, §3.9).
 
 - **M14 — A Bluetooth keyboard (proposed 2026-10-30, §3.10).** In steps,
   each ending in a measurement or a test before the next:

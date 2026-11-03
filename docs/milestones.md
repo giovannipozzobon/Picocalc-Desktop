@@ -101,7 +101,7 @@ was not confirmed one by one.
 the panel, scrolling past the frame memory's wrap, vi, the FPGA powered
 after the PicoCalc and `hdmi`, the cost of a redraw with the mirror (the
 owner's figures, +11.7% and +44%, are from its own starter), `usbdisk`,
-`web` and a program run and back, and the W and DOS builds coming up.
+a program run and back, and the W and DOS builds coming up.
 `linktest`, `lcdbench` and `hdmipat` of the owner's project were not
 brought over. The mirror's one-packet-per-row copy is as the starter's;
 a packet for a whole blit has not been tried.
@@ -136,7 +136,7 @@ build, UNIX flavour, with a card set aside:
 - *Step 4*, the shell: the keyboard types at the prompt; with the
   firmware file missing, the line `bluetooth: <why>` and the PicoCalc's
   keyboard going on; the keyboard usable about 1 s after the prompt after
-  `reboot`, 2-3 s after coming back from `web`; `-Os` not noticeably slower.
+  `reboot`, 2-3 s after coming back from a program; `-Os` not noticeably slower.
 - `usbdisk`, 8 MB each way to a Mac (`tools/usb-rate.py`): with the radio
   on, 660 KB/s written and 497 read; without, 663 and 612; both read back
   byte for byte. *The owner decided to leave the radio on in `usbdisk`.*
@@ -162,37 +162,6 @@ sleeping keyboard stays connected; the shell with no pairing not starting the ra
 `pairing.dat` (the pins of GP23-25 and GP29); the battery's cost with
 the radio on; the DOS flavour on the board; the release build; a keyboard
 paired by a `btpair` other than the owner's.
-
-## M13 — A web file manager, steps 1-3 (2026-10-30, branch `m13-web`)
-
-**Steps 1-3 done 2026-10-30; step 4, installing a program from the page,
-is on hold at the owner's request** (design.md §3.9). `web.uf2`, a RAM
-program run by the W builds' `web` (`WEB`), joins the network
-`/ntp/ntp.cfg` names and serves the card to a browser at its address and
-at `picocalc.local`: list, upload, download, rename, move, delete and make
-folders, with PicoMultiLoader's page and API.
-
-**Checked on the host.** `test_web` (requests, UTF-8 and CP437 names, JSON,
-times, the card's operations over FAT16 and FAT32, a card failing during an
-upload) and `test_httpd` (the HTTP connection driven as a browser would,
-in pieces of 1 byte to 100 KB, uploads of 0 to 100,000 bytes, a card that
-fails, a long listing), and `web` in `test_ntp`. Mutations to the file-send
-failure, the upload's undo and the listing's separator were seen to fail.
-
-**Checked on the board, by the owner,** on a Pico 2 W: the server joined
-the network, and from a browser listing, upload, download, rename, make
-folder and delete worked. Not recorded: the speeds, a file of several MB,
-a second client.
-
-**Measurements.** `web.uf2` 502,832 B of RAM (95.9%) in the development
-build, 493,184 B in the release build, from the link map (before step 2's
-`-Os`, which has since made it 458,036 B).
-
-**Not checked.** Install from the page (not built); speed up and down
-against `usbdisk`'s; a file of several MB compared byte for byte; a
-dropped connection leaving nothing behind (done on the host only);
-`picocalc.local` from a phone; several connections at once; the DOS
-flavour's `WEB` on the board.
 
 ## M7 — Shell at power-on (2026-10-25, branch `m7-boot-shell`)
 
