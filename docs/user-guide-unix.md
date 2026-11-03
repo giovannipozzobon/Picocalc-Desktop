@@ -7,7 +7,7 @@ command and the command line itself.
 
 The shell also comes in a DOS flavour, with `DIR`, `COPY`, batch files
 and EDIT; it has [its own guide](user-guide-dos.md). Each flavour is a
-separate `BOOT2350.UF2`. To install one, see the [README](../README.md).
+separate `BOOT2350.UF2`. To install one, see the [SHELL.md](../SHELL.md).
 
 ## Contents
 
@@ -25,7 +25,7 @@ separate `BOOT2350.UF2`. To install one, see the [README](../README.md).
 Hold **Up** (or F1 or F5) while switching the PicoCalc on, and the shell
 starts. Powering on with no key held starts the last program you ran.
 
-With the shell's own build of UF2 Loader installed (see the README), it
+With the shell's own build of UF2 Loader installed (see SHELL.md), it
 is the other way round: switching on gives the shell, and holding Up (or
 F1 or F5) starts the last program.
 

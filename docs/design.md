@@ -328,7 +328,7 @@ loader's menu.
 Pico Logo keeps a LittleFS filesystem in the app partition, after its code.
 Running any other program reuses that flash, so the filesystem may be
 partly overwritten. The shell cannot tell that such data exists. This is
-documented in the README: a program meant to be run from the shell keeps
+documented in SHELL.md: a program meant to be run from the shell keeps
 its data on the card. Pico Logo is the known exception. M10 would give
 such programs a partition of their own (§3.7).
 

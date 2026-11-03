@@ -9,7 +9,7 @@ programs by name.
 
 The shell also comes in a UNIX flavour, with `ls`, `cp`, `rm` and vi; it
 has [its own guide](user-guide-unix.md). Each flavour is its own
-`BOOT2350.UF2`. To install one, see the [README](../README.md).
+`BOOT2350.UF2`. To install one, see the [SHELL.md](../SHELL.md).
 
 ## Contents
 
@@ -29,7 +29,7 @@ Hold **Up** (or F1 or F5) while switching the PicoCalc on, and the shell
 starts. Powering on with no key held starts the last program you ran,
 as the loader always has.
 
-With the shell's own build of UF2 Loader installed (see the README), it
+With the shell's own build of UF2 Loader installed (see SHELL.md), it
 is the other way round: switching on gives the shell, and holding Up (or
 F1 or F5) starts the last program.
 
