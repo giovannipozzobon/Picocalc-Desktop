@@ -53,7 +53,7 @@ You need a PicoCalc with an RP2350 board and UF2 Loader 2.3 or later in
 flash.
 
 1. Get the flavour you want to use from the
-   [releases](https://github.com/BlairLeduc/picocalc-shell/releases):
+   [releases](https://github.com/giovannipozzobon/Picocalcc-Desktop/releases):
    `shell-unix.uf2` or `shell-dos.uf2`. Or build it (below).
 2. On the SD card, rename the loader's `/BOOT2350.UF2` to `/BOOT2350.ORG`.
    You can return to the shell's `menu` command (`EXIT` in the DOS flavour)
