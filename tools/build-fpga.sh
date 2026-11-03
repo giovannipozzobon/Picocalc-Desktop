@@ -26,5 +26,5 @@ done
 "$ROOT/fpga/gowin/run_synth.sh" "$TARGET" ${ARGS[@]+"${ARGS[@]}"}
 FS="$(find "$ROOT/fpga/gowin/work/$TARGET/impl" -name '*.fs' | head -n1)"
 mkdir -p "$ROOT/build/fpga"
-cp "$FS" "$ROOT/build/fpga/$TARGET.fs"
+cp -f "$FS" "$ROOT/build/fpga/$TARGET.fs"
 echo "build-fpga.sh: build/fpga/$TARGET.fs"
