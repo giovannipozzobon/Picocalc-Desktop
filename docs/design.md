@@ -1240,8 +1240,11 @@ and that a Pico 2 with the W build fails cleanly.
 
 *Proposed 2026-11-01 (the owner).* The panel can be copied to a Tang Nano
 20K on the PicoCalc's J703 header, whose FPGA scales the 320x320 picture
-to 1280x720 HDMI. The FPGA's gateware and the wiring are the owner's
-project, `pico_tang20k_hdmi`, and are not here. This is the Pico's side
+to 1280x720 HDMI. The FPGA's gateware (`fpga/`, from the owner's
+project `pico_tang20k_hdmi`, brought into this repository on 2026-11-03,
+with its protocol in `docs/fpga/hdmi-mirror-protocol.md` and its notes
+in `docs/fpga/phases.md`) is built with `tools/build-fpga.sh` and
+simulated with `tools/test-fpga.sh`. This is the Pico's side
 of it: its `drivers/mirror.[ch]`, `mirror.pio` and `hdmi` command, from the
 owner's copy of `picocalc-text-starter`, in the shell's own `lcd.c`.
 The link and its measured limits are in hardware-notes.md §8.7.

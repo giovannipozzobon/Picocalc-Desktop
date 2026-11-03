@@ -246,3 +246,10 @@ the binary:
 > CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 > OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 > OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+## The FPGA gateware (`fpga/`)
+
+Brought from the owner's `pico_tang20k_hdmi` on 2026-11-03, under this
+project's MIT licence. `fpga/rtl/video/j20k_*.v` and
+`fpga/rtl/common/uart_tx.v` come from the owner's J20K project. Building it
+needs Gowin EDA, which is not in the tree.

@@ -6,3 +6,5 @@ out/
 test/suites/
 
 references/
+# Gowin EDA: synthesis and place&route, rebuilt by tools/build-fpga.sh
+fpga/gowin/work/

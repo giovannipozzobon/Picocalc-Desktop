@@ -1,0 +1,3 @@
+// Seriale verso il BL616 (USB-C), solo TX
+IO_LOC  "uart_tx_pin" 69;
+IO_PORT "uart_tx_pin" IO_TYPE=LVCMOS33 PULL_MODE=NONE DRIVE=8;

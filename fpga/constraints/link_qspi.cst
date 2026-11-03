@@ -1,0 +1,26 @@
+// PicoCalc HDMI Mirror - collegamento QSPI da J703 (fase 2)
+//
+// Pin PROPOSTI dalla pinlabel Sipeed (tang_nano_20k_pinlabel.png), tutti su
+// banchi a 3,3 V e senza funzioni on-board attive (esclusi 85/80 = SDIO,
+// 52/53 = EDID, 15-20 = LED). NON usati da nessun vincolo di J20K.
+// Da confermare sullo schema prima del cablaggio definitivo.
+//
+//   J703 pin 2 GP2  D0    -> 73  (IOT40A)
+//   J703 pin 3 GP3  D1    -> 74  (IOT34B)
+//   J703 pin 4 GP4  D2    -> 75  (IOT34A)
+//   J703 pin 5 GP5  D3    -> 77  (IOT30A)
+//   J703 pin 6 GP21 SCK   -> 76  (IOT30B)
+//   J703 pin 7 GP28 CS_N  -> 86  (IOT4A)
+//   J703 pin 8 GND        -> GND
+IO_LOC "qspi_d[0]" 73;
+IO_LOC "qspi_d[1]" 74;
+IO_LOC "qspi_d[2]" 75;
+IO_LOC "qspi_d[3]" 77;
+IO_LOC "qspi_sck"  76;
+IO_LOC "qspi_csn"  86;
+IO_PORT "qspi_d[0]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_PORT "qspi_d[1]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_PORT "qspi_d[2]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_PORT "qspi_d[3]" IO_TYPE=LVCMOS33 PULL_MODE=DOWN;
+IO_PORT "qspi_sck"  IO_TYPE=LVCMOS33 PULL_MODE=DOWN;   // riposo basso
+IO_PORT "qspi_csn"  IO_TYPE=LVCMOS33 PULL_MODE=UP;     // riposo alto
