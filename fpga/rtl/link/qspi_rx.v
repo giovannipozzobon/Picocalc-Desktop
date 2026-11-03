@@ -14,7 +14,7 @@
 // campioni consecutivi uguali (FILT=1: nessun filtro). Serve a ignorare il
 // ringing di cavi lunghi senza resistenze serie; l'impulso piu' corto di SCK
 // (mezzo periodo) deve durare almeno FILT cicli di sys_clk: con 108 MHz e
-// FILT=3 SCK arriva a circa 15 MHz, con FILT=1 a 25 MHz. I dati sono ritardati
+// FILT=3 SCK arriva a circa 15 MHz, con FILT=1 a 25 MHz (il mirror usa FILT=2: 25 MHz con resistenze serie da 47 ohm). I dati sono ritardati
 // dello stesso numero di cicli di SCK, quindi il campionamento non cambia.
 //
 // Uscite (sys_clk):

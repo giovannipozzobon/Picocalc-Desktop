@@ -25,8 +25,13 @@
 
 #if PICO_SHELL_HDMI
 
-/* 1 MiB with no errors on loose wires; 20 MHz failed there (pico_tang20k_hdmi, phase 2). */
-#define MIRROR_HZ 15000000u
+/* The link's clock. 25 MHz ran 8 MiB with no errors with 47 ohm series
+ * resistors on the data lines and SCK, and the FPGA's FILT=2; on loose wires
+ * with no resistors 15 MHz was the most (20 MHz failed): build with
+ * -DPICO_SHELL_HDMI_HZ=15000000 for those. */
+#ifndef MIRROR_HZ
+#define MIRROR_HZ 25000000u
+#endif
 
 /* GP20 high, GP28 high, the PIO set up, and a reset packet to the FPGA. */
 void mirror_init(void);

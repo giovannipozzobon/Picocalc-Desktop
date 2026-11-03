@@ -372,7 +372,7 @@ static int hdmi_calls;
 static const char *fake_hdmi(void *ctx) {
     (void)ctx;
     hdmi_calls++;
-    return "HDMI mirror on, QSPI 15000 kHz";
+    return "HDMI mirror on, QSPI 25000 kHz";
 }
 
 static int test_hdmi(void) {
@@ -385,10 +385,10 @@ static int test_hdmi(void) {
     shell_system_t sys = { 0 };
     sys.hdmi = fake_hdmi;
     shell_set_system(&sh, &sys);
-    CHECK(run(name) == 0 && strcmp(con, "HDMI mirror on, QSPI 15000 kHz\n") == 0 && hdmi_calls == 1,
+    CHECK(run(name) == 0 && strcmp(con, "HDMI mirror on, QSPI 25000 kHz\n") == 0 && hdmi_calls == 1,
           "resent: '%s'", con);
     CHECK(run(name) == 0 && hdmi_calls == 2, "again");
-    CHECK(strlen("HDMI mirror on, QSPI 15000 kHz") < 40, "fits 40 columns");
+    CHECK(strlen("HDMI mirror on, QSPI 25000 kHz") < 40, "fits 40 columns");
 
     snprintf(want, sizeof want, "usage: %s\n", name);
     CHECK(run(SHELL_DOS ? "HDMI x" : "hdmi x") == 1 && strcmp(con, want) == 0 && hdmi_calls == 2,

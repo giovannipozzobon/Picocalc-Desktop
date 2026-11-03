@@ -104,6 +104,15 @@ were chosen from Sipeed's pin map and are to be checked against the board's
 schematic. The shell holds GP20, the PSRAM's chip select, high. HDMI goes
 out on the Tang Nano 20K's own HDMI connector.
 
+**Series resistors.** The link runs at **25 MHz**, which needs a **47 ohm
+resistor in series on each of D0-D3 and SCK** (five resistors, near the
+PicoCalc end) and the FPGA's glitch filter at `FILT=2`, the `mirror`
+bitstream's value. With them, `linktest` carried 1 MiB at 20 MHz and 1 MiB
+and 8 MiB at 25 MHz with no errors. On loose wires with no resistors the
+most was 15 MHz (20 MHz failed): build the shell for that with
+`-DPICO_SHELL_HDMI_HZ=15000000` (and `FILT=3` in the bitstream: set
+`FILT` in `fpga/rtl/top/pm_mirror_top.v`).
+
 ## Turn on the HDMI mirror
 
 1. Load the `mirror` bitstream into the FPGA (above), wire the boards, and
@@ -112,7 +121,7 @@ out on the Tang Nano 20K's own HDMI connector.
    powered when the PicoCalc starts, the mirror works from the first screen.
 3. If the FPGA came up later, or a cable moved, type `hdmi` (DOS: `HDMI`).
    It sends the FPGA the panel's state again, redraws the screen, and says
-   `HDMI mirror on, QSPI 15000 kHz`.
+   `HDMI mirror on, QSPI 25000 kHz`.
 
 `info` ends its `build` line with `hdmi` and `BT` when the build has them.
 The mirror is in the shell and in the programs built with it, such as
@@ -162,11 +171,11 @@ it shows and how to use it.
 ## Next steps
 
 - **A board in place of the loose wires.** A small PCB between J703 and the
-  Tang Nano 20K, to raise the link from 15 MHz to 20-25 MHz. On loose wires
-  with no series resistors the link carried 1 MiB with no errors at 1, 5, 10
-  and 15 MHz and failed at 20 MHz, even with a shorter glitch filter
-  (`FILT=2`). 20-25 MHz is to be tried with series resistors and `FILT=1`
-  (`FILT=1 tools/build-fpga.sh linktest`).
+  Tang Nano 20K, with the series resistors on it, so the 25 MHz link no
+  longer depends on hand-soldered wires. A redraw with the mirror costs, at
+  25 MHz, +0.2% for a strip of pixels and +24% for one character; the
+  cost of a character is the known limit (a fixed time for each packet),
+  with remedies not yet applied: one packet for the setup of a blit.
 - **The mouse in the shell.** A pointer on the screen and clicks at the
   prompt, in vi, EDIT and the menus.
 

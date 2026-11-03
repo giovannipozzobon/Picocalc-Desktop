@@ -13,7 +13,7 @@
 `default_nettype none
 
 module pm_mirror_top #(
-    parameter integer FILT = 3
+    parameter integer FILT = 2
 ) (
     input  wire        sys_clk,        // 27 MHz
     input  wire        s1,             // non usato
