@@ -1,7 +1,17 @@
 # Third-party material
 
-Everything in this repository is this project's own work under the GPL-3.0 in
-[`LICENSE`](LICENSE), with the exceptions below. Each file taken from
+This project's own work is under the MIT licence in [`LICENSE`](LICENSE),
+with the exceptions below.
+
+**Files that stay under the GPL-3.0** ([`LICENSE-GPL-3.0`](LICENSE-GPL-3.0)):
+those derived from pelrun's UF2 Loader (section "UF2 Loader" below:
+`src/core/uf2.c`/`uf2.h`, `src/port/loader.c`, `usbdisk.c`,
+`usb_descriptors.c`, `tusb_config.h`, `patches/`, and
+`include/picocalc_shell.h`, which is also offered under the MIT licence),
+and those taken from pico-oric ("The owner's emulators" below), until
+their copyright holder agrees to relicense them. A firmware image that
+links the GPL-3.0 files is distributed under the GPL-3.0 as a whole.
+Each such file's header names its origin. Each file taken from
 elsewhere says where it came from in its header.
 
 ## The owner's emulators (pico-oric) — GPL-3.0
