@@ -29,9 +29,13 @@ that was `pico_tang20k_hdmi`.
 ## What you need
 
 - A PicoCalc with a **Pico 2 W** or **Pimoroni Pico Plus 2 W** (RP2350 with
-  the CYW43439 radio). Bluetooth needs the W; the HDMI mirror alone works
-  on a Pico 2 too.
+  the CYW43439 radio). Bluetooth needs the W. The HDMI mirror should work
+  on a Pico 2 too, but it has never been tried there.
 - A **Sipeed Tang Nano 20K** (Gowin GW2AR-18C), with an HDMI cable to the monitor.
+- **Gowin EDA**, Gowin's FPGA tool, to build the bitstream: install it from
+  [gowinsemi.com](https://www.gowinsemi.com/en/support/download_eda/) (its
+  Education edition is enough for the GW2AR-18C; a licence is not needed
+  for it). Without it only the simulation and the firmware can be built.
 - A Bluetooth keyboard and/or mouse.
 - To build: [CMake](https://cmake.org), the Pico SDK with its Arm toolchain
   (the build finds the newest under `~/.pico-sdk/`, as the VS Code extension
@@ -63,6 +67,10 @@ tools/build.sh -DPICO_SHELL_UART=OFF -DPICO_BOARD=pico2_w -DPICO_SHELL_HDMI=ON \
 - The host tests need no hardware: `cmake -S . -B build/host -DPICO_SHELL_HOST=ON && cmake --build build/host -j && ctest --test-dir build/host --output-on-failure`.
 
 ## Build the FPGA's bitstream (Tang Nano 20K)
+
+**Install Gowin EDA first**; `tools/build-fpga.sh` stops with `gw_sh non
+trovato` if it cannot find it. It looks in `/Applications` and
+`~/Applications`, or in `$GOWIN_HOME` (the directory that holds `IDE/bin/gw_sh`).
 
 ```sh
 tools/build-fpga.sh mirror              # build/fpga/mirror.fs
