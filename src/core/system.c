@@ -56,7 +56,7 @@ int cmd_help(shell_t *sh, int argc, char **argv) {
         }
     }
     out_puts(&sh->out, SHELL_DOS ? "\nHELP name for one. Any other name runs\n"
-                                   "a program from PATH, as NAME.UF2.\n"
+                                   "a program here or on PATH: NAME.UF2.\n"
                                  : "\n`man name` for one. Any other name runs\n"
                                    "a program from $PATH, as `name.uf2`.\n");
     return 0;
@@ -194,6 +194,7 @@ int cmd_info(shell_t *sh, int argc, char **argv) {
 static int leave(shell_t *sh, int argc, const char *name, shell_power_t what, const char *msg) {
     if (argc != 1) return usage(sh, name);
     if (!sh->sys.power) return not_here(sh, name);
+    if (what != SHELL_POWER_OFF) shell_keep_cwd(sh);
     shell_leaving(sh);
     out_puts(&sh->con, msg);
     const char *why = sh->sys.power(sh->sys.ctx, what);
@@ -220,7 +221,7 @@ int cmd_bootsel(shell_t *sh, int argc, char **argv) {
 
 bool system_leaves(shell_cmd_fn fn) {
     return fn == cmd_poweroff || fn == cmd_reboot || fn == cmd_bootsel ||
-           (SHELL_NTP && fn == cmd_ntp);
+           (SHELL_NTP && (fn == cmd_ntp || fn == cmd_web));
 }
 
 #if SHELL_NTP
@@ -253,6 +254,19 @@ int cmd_ntp(shell_t *sh, int argc, char **argv) {
     return status;
 }
 
+/* ---- web -------------------------------------------------------------- */
+
+/* web.uf2, the card on the network (design.md §3.9): the W build's, as
+ * `ntp` is, and unlike it every time it is typed: a person asked for it,
+ * and it ends when the person says so, with Esc. The W build is the one
+ * whose port has NTP. */
+int cmd_web(shell_t *sh, int argc, char **argv) {
+    (void)argv;
+    const char *name = SHELL_DOS ? "WEB" : "web";
+    if (argc != 1) return usage(sh, name);
+    if (!clock_has_ntp()) return not_here(sh, name);
+    return run_ram_program(sh, name);
+}
 #endif
 
 /* ---- bt --------------------------------------------------------------- */

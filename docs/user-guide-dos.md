@@ -37,21 +37,24 @@ The card is drive `C:`, and the prompt is the drive and directory
 followed by `>`:
 
 ```
-C:\HOME>DIR
+C:\>DIR
  Volume in drive C has no label
  Volume Serial Number is 5C23-0000
- Directory of C:\HOME
+ Directory of C:\
 
 NOTES          <DIR>
 TODO     TXT                          6
     1 file(s)              6 bytes
                   66,040,832 bytes free
-C:\HOME>CD ..
-C:\>
+C:\>CD NOTES
+C:\NOTES>
 ```
 
-The shell starts in `C:\HOME` if the card has one, and otherwise in
-`C:\`. The screen shows 40 columns in IBM's PC font, as DOS did.
+The shell starts in `C:\`, as DOS did; a `CD` in `AUTOEXEC.BAT` starts it
+elsewhere. Coming back from a program, a `REBOOT` or `EXIT`, it returns to
+the directory you left, if that is still on the card. After `POWEROFF` or
+the power switch at the prompt, it starts as at first. The screen shows 40
+columns in IBM's PC font, as DOS did.
 
 `HELP` lists the commands, and `HELP name` explains one:
 
@@ -96,6 +99,22 @@ and in the editor (vi or EDIT) the cursor goes three lines, up for a notch
 forward. In `MORE` a notch back shows three rows more. The mouse's
 movement and buttons are not used yet.
 
+### A Bluetooth gamepad
+
+In the Pico 2 W build, a Bluetooth gamepad (written for the 8BitDo M30 in
+its D-input mode) works as keys: the D-pad (or the stick) is the arrows,
+repeating when held; button 1 (A) is Enter, button 2 (B) Esc, Select Tab,
+Start Enter. It is paired in the mouse's place, so a gamepad and a mouse
+cannot both be used. Pair it with the `gamepad-test` program (page P: `s`
+searches, then the pad's number), which also tries every key of the pad;
+`pad-game` moves a ship with it. Both are in `/pico2-apps/`. The button
+numbers are as the pad's report gives them (`src/core/gamepad.h` has the
+roles). Tried on the board with an M30: the D-pad and the main buttons
+work. C, R and the heart button are reported as extra buttons 17-32 (any
+other field of the report is one, in the order the pad lists them) and
+have no role yet; the star button sends nothing. `gamepad-test` page A
+lists each extra's report field, page B lights its number.
+
 ### The PicoCalc's own keys
 
 Alt+`,`, Alt+`.`, Alt+Space and Alt+B belong to the keyboard itself: it
@@ -107,9 +126,9 @@ from the command line.
 
 ### Paths
 
-- Paths use `\`: `C:\ORIC\KEYMAPS`. `/` works as well, except in DIR,
-  COPY, XCOPY, DEL and DELTREE, where a `/` starts a switch anywhere in
-  a word, as in DOS: `DIR \/W` is `DIR \ /W`.
+- Paths use `\`: `C:\ORIC\KEYMAPS`. `/` starts a switch and never
+  separates names, as in DOS: `DIR \/W` is `DIR \ /W`, and `CD /HOME` is
+  `Invalid switch - /HOME`.
 - A path may start with `C:` or not: `C:\HOME` and `\HOME` are the same.
 - Commands and switches can be typed in either case: `dir /w` is `DIR /W`.
 - `CD..`, `CD\` and `DIR/W` work with no space, as in DOS.
@@ -203,11 +222,24 @@ and time on the next row, so every row fits the 40 columns.
 
 | Command | Does |
 |---|---|
-| `COPY [/V] [/B] source [destination]` | copies files: `COPY A.TXT B.TXT`, `COPY *.TXT \BACKUP`, `COPY *.TXT *.BAK`. `/V` and `/B` are accepted and change nothing; `COPY NAME+,,` touches a file (below) |
+| `COPY [/V] [/B] source [destination]` | copies files: `COPY A.TXT B.TXT`, `COPY *.TXT \BACKUP`, `COPY *.TXT *.BAK`. `/V` and `/B` are accepted and change nothing; `COPY NAME+,,` touches a file, and `CON` and `NUL` are devices (below) |
 | `XCOPY source [destination] [/S]` | copies files and, with `/S`, every directory below |
 
 `COPY` and `XCOPY` give each copy the date and time of the file it was
 copied from, as DOS did.
+
+COPY also takes two devices, `CON` (the keyboard and screen) and `NUL`
+(nothing), as `CON:` and `NUL:` too:
+
+- `COPY CON NOTE.TXT` writes what you type to a file, each line ended
+  with CR LF. Ctrl+Z or F6 finishes at once, with no Enter needed after it.
+  Esc drops the line being typed; Ctrl+C or Break stops, leaving any old
+  file as it was.
+- `COPY NOTE.TXT CON` shows a file; `COPY NOTE.TXT NUL` only reads it, so
+  it tells you the file can be read.
+- `COPY NUL NOTE.TXT` makes an empty file.
+
+Only COPY treats these names as devices, and redirection takes `> NUL`.
 
 `COPY /B NAME+,,` gives a file the date and time now, leaving what is in
 it, as in DOS: UNIX's `touch`. A wildcard does each file it matches. With
@@ -255,6 +287,7 @@ copy is always byte for byte), so `COPY NAME+,,` is the same.
 | `DATE [/T \| date]` | shows the date and asks for a new one; Enter keeps it. `DATE 10-22-26` sets it, `DATE /T` only shows it |
 | `TIME [/T \| time]` | the same for the time: `TIME 14:30`, `TIME 2:30p`, `TIME 9:05:30` |
 | `NTP [/F]` | in the Pico 2 W build: sets the clock from the network, once each power-on; `/F` tries again |
+| `WEB` | in the Pico 2 W build: manages the card from a browser, over Wi-Fi, until Esc |
 | `BT` | in the Pico 2 W build: what the Bluetooth keyboard is doing |
 | `HDMI` | in a build made for it: sends the screen to the HDMI mirror again |
 
@@ -344,6 +377,38 @@ timeout  = 20                   # seconds to join and get the time, 5 to 60
 | `ntp.uf2 did not finish` | the program was cut off: power, or a reset |
 
 
+`WEB`:
+
+- `WEB` manages the card from a browser on the same network: list
+  folders, upload (drag files onto the page, or paste them), download,
+  rename, move, delete and make folders. It runs the program `WEB.UF2`,
+  found as `NTP.UF2` is, which joins the network, shows its address on the
+  screen and answers a browser there, and at `http://picocalc.local/`. Without it, `WEB` says `Bad command or file name`.
+- It joins the network `C:\NTP\NTP.CFG` names (the file `NTP` reads; only `ssid`,
+  `password`, `country` and `timeout` matter to it), written with EDIT.
+  It joins as a client of the network: it makes no network of its own.
+- **There is no password.** While it runs, anyone on the network can read
+  and change everything on the card. Use it on a network you trust.
+- Esc, Break or Ctrl-C on the PicoCalc stops it and comes back to the
+  shell.
+- A file is written to `name.new` first and put in place when it is whole,
+  so a transfer that breaks off leaves the old file as it was. Names are
+  shown as UTF-8; a name from the browser that the card's character set
+  (CP437) cannot spell is refused.
+- Installing a program from the page is not there yet.
+- It is the Pico 2 W build's; with `WEB` on a Pico 2 you get
+  `WEB: not on this machine`.
+
+| `WEB.UF2` says | Means |
+|---|---|
+| `The card cannot be read.` | no card, or one that is not FAT |
+| `Line N: ...` | a mistake in `C:\NTP\NTP.CFG`; each key once |
+| `It names no network.` | no `ssid` in the file |
+| `The password was refused.` | check `password` |
+| `The network was not joined.` | no network by that name in range |
+| `No address from the network.` | joined, but DHCP did not answer in time |
+| `No radio.` | a Pico 2 W build on a Pico 2 |
+
 `BT`:
 
 - A Bluetooth keyboard works at the prompt, in EDIT and in everything that
@@ -372,7 +437,7 @@ timeout  = 20                   # seconds to join and get the time, 5 to 60
   beside the keyboard (btpair 2.1 keeps one of each): it connects when
   the radio starts, but the shell does not use it, and `bt` speaks of the
   keyboard only.
-- A program (an emulator) runs without it: the radio goes with the
+- A program (`WEB`, an emulator) runs without it: the radio goes with the
   shell, and starts again, with the keyboard connecting again, when the
   program returns.
 - The radio takes some of the processor's time: `USBDISK` reads about a
@@ -450,10 +515,24 @@ gone, it moves to `C:\`.
 
 ## 5. Running programs
 
-Type a program's name to run it: `PICO-ATOM` runs `PICO-ATOM.UF2`. The
-shell looks in the current directory first, then in each directory of
-`PATH`, which starts as `C:\PICO2-APPS`. A batch file of the same name,
-`PICO-ATOM.BAT`, anywhere it looks, runs in its place.
+Type a program's name to run it: `PICO-ATOM` runs `PICO-ATOM.UF2`. A
+program can live wherever you keep its files:
+
+```
+C:\>CD ATOM
+C:\ATOM>PICO-ATOM
+```
+
+or by its path, `C:\ATOM\PICO-ATOM`, or from any directory you add to
+`PATH`. `PICO-ATOM.UF2` typed in full works too.
+
+The shell looks in the current directory first, then in each directory of
+`PATH`, which starts as `C:\PICO2-APPS`, the directory UF2 Loader's own
+menu lists. Only programs there show up in that menu. In each directory,
+as in DOS, a program comes before a batch file of the same name, so
+`PICO-ATOM.BAT` in the current directory runs ahead of `PICO-ATOM.UF2` on
+`PATH`, but not ahead of one beside it. Type `PICO-ATOM.BAT` to run the
+batch file anyway.
 
 ```
 C:\>PICO-ORIC
@@ -489,10 +568,35 @@ from the card without writing flash.
   and on. For a program that runs from RAM, only switching off and on
   works.
 
+### Giving a program a file
+
+A program that says it takes arguments can be given them after its name.
+By convention, `/T` names a tape and `/D` a disc, and each program decides
+which it takes. A name is found from your directory, not the program's own:
+
+```
+C:\HOME>PICO-ORIC /T GAME.TAP
+```
+
+This loads `C:\HOME\GAME.TAP`. `PICO-ORIC/T GAME.TAP` is the same, since a
+`/` ends a command's name, as in `DIR/W`; so write a relative path with `\`,
+as `GAMES\ORIC`. `%NAME%` works as for any command, and `PICO-ORIC /T %1` in a
+batch file, though nothing after that line runs. Wildcards go to the program
+as typed. A file on another drive is refused by the program. A program that
+has not said it takes arguments is refused rather than started without them:
+
+```
+C:\HOME>PICO-ATOM /T GAME.TAP
+PICO-ATOM: takes no arguments
+```
+
+The arguments last for that one start. Switching off and on starts the
+program with none, and so does starting it from the loader's menu.
+
 ### Limits
 
-- **Programs take no arguments yet.** `PICO-ORIC GAME.TAP` is refused,
-  and so is running a program with a redirection or in a pipe.
+- **A program takes no redirection or pipe.** Running one with `>` or in a
+  pipe is refused.
 - **Programs that keep files in flash.** Running a program rewrites the
   program area of flash, so a program that keeps its own files there,
   after its code, loses them when another program runs. **Pico Logo**
@@ -728,12 +832,12 @@ opens, but must be saved under another name.
 ```
 C:\BOOT2350.UF2       the shell
 C:\BOOT2350.ORG       UF2 Loader's own menu, run with EXIT
-C:\PICO2-APPS\        programs, run by name
+C:\PICO2-APPS\        programs, run by name; they can live elsewhere too
 C:\PICO2-APPS\NTP.UF2 the Pico 2 W build's NTP
 C:\NTP\NTP.CFG        NTP's settings
 C:\AUTOEXEC.BAT       run each time the shell starts
-C:\HOME\              where the shell starts
-C:\.shell\            the shell's history, and large pipes while they run
+C:\.shell\            the shell's history, the directory to come back to,
+                      and large pipes while they run
 ```
 
 - **Hidden files.** `DIR` and wildcards leave out names that start with

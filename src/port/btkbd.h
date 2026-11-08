@@ -18,6 +18,9 @@
  * A Bluetooth mouse can be paired too, alongside the keyboard: btkbd_mouse()
  * gives its movement. (A keyboard's own trackpad comes out of it as well.)
  *
+ * A Bluetooth gamepad (the 8BitDo M30, say) is paired in the mouse's place,
+ * and btkbd_gamepad() gives what it holds; see "gamepad" below.
+ *
  * Both kinds of keyboard work: "classic" Bluetooth ones, and Bluetooth Low
  * Energy (BLE) ones, which speak HID over GATT.
  *
@@ -72,11 +75,32 @@ const char *btkbd_device_name(btkbd_device_t d);
    anything changed */
 bool btkbd_mouse(int *dx, int *dy, int *wheel, int *buttons);
 
+/* A gamepad, paired as the mouse (the second device is one or the other).
+ * It is told from a mouse by its reports: a hat switch, or axes that run from
+ * 0 up. Returns false until it has sent one. hat: 0-7 clockwise from up, or
+ * -1 neutral; x, y: its stick, -128..127 (y down is positive); buttons: bit n
+ * is HID button n+1; reports: how many have come. gamepad.h turns these into
+ * directions and keys. */
+typedef struct {
+	int hat, x, y;
+	uint32_t buttons;	/* bits 0-15: HID buttons 1-16; 16-31: the report's other fields (below) */
+	unsigned reports;
+	uint8_t last[16];	/* the first bytes of the last report, as it came */
+	int last_len;
+} btkbd_pad_t;
+/* What the extra button i (bit 16 + i) is: a field of the report that is not
+   a hat, a stick, a button 1-16 or a key: its usage page and usage (a
+   trigger is 0001:0032 or 0035, Home 000C:0223, a vendor key FF00:xxxx).
+   False if there is no such extra yet. */
+bool btkbd_gamepad_extra(int i, unsigned *page, unsigned *usage);
+bool btkbd_gamepad(btkbd_pad_t *p);
+
 /* pairing: search for keyboards and mice in pairing mode (about 10 seconds) */
 void btkbd_search(void);
 int btkbd_found(void);			/* how many found so far */
 const char *btkbd_found_name(int i);
 bool btkbd_found_le(int i);		/* a Bluetooth Low Energy one */
+bool btkbd_found_pad(int i);		/* it says it is a joystick or gamepad (pair it as BTKBD_MOUSE) */
 int btkbd_found_kind(int i);		/* what it says it is: BTKBD_KEYBOARD, BTKBD_MOUSE, or -1 */
 /* pair it as the keyboard or the mouse, replacing the one before */
 void btkbd_pair_as(int i, btkbd_device_t d);

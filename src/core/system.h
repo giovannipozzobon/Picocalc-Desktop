@@ -32,6 +32,8 @@ int cmd_ntp(shell_t *sh, int argc, char **argv);
 int cmd_bt(shell_t *sh, int argc, char **argv);
 /* Resends the screen to the HDMI mirror, in the builds that have one (design.md §3.11). */
 int cmd_hdmi(shell_t *sh, int argc, char **argv);
+/* Only in the W build too (httpd.h, design.md §3.9). */
+int cmd_web(shell_t *sh, int argc, char **argv);
 
 /* Whether `fn` leaves the shell, for run_cmd to refuse a redirection. */
 bool system_leaves(shell_cmd_fn fn);

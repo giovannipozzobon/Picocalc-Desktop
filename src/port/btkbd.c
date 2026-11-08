@@ -35,6 +35,7 @@
 #include "ble/le_device_db_tlv.h"
 #include "btstore.h"
 #include "cyw43_fw.h"
+#include "gamepad.h"
 #include "keycodes.h"
 
 /* ------------------------------------------------------------ storage */
@@ -212,6 +213,7 @@ static struct {
 	bool named;
 	bool le;
 	int kind;			/* BTKBD_KEYBOARD, BTKBD_MOUSE, or -1 if it doesn't say */
+	bool pad;			/* a joystick or gamepad: kind is BTKBD_MOUSE, for the second slot */
 	bd_addr_type_t type;
 	char name[32];
 } found[FOUND_MAX];
@@ -507,36 +509,61 @@ static void keys_now(uint8_t m, const uint8_t *keys, int n)
 	}
 }
 
-static void parse_report(const uint8_t *desc, uint16_t desc_len, const uint8_t *report, uint16_t len);
+static void parse_report(slot_t *s, const uint8_t *desc, uint16_t desc_len, const uint8_t *report, uint16_t len);
 static volatile unsigned ptr_reports;
 static volatile int ptr_x, ptr_y, ptr_wheel, ptr_buttons;	/* added up, since the start */
+
+/* A gamepad paired in the mouse's place (a pointing device, or a game one,
+   is the second device): what it holds now, as its last report said. */
+static volatile bool pad_seen;				/* the second device has shown itself a gamepad */
+static volatile unsigned pad_reports;
+static volatile int pad_hat = -1, pad_x, pad_y;
+static volatile uint32_t pad_buttons;
+static uint8_t pad_last[16];
+static volatile int pad_last_len;
+#define PAD_EXTRAS 16
+static struct { uint16_t page, usage; } pad_extra[PAD_EXTRAS];
+static int n_pad_extra;
+
+/* the bit for a field of the report that is not a standard pad control; its
+   place is taken the first time the field is seen, which is the first
+   report, whatever is pressed, so the order is the descriptor's */
+static int pad_extra_bit(uint16_t page, uint16_t usage)
+{
+	for (int i = 0; i < n_pad_extra; i++)
+		if (pad_extra[i].page == page && pad_extra[i].usage == usage) return i;
+	if (n_pad_extra >= PAD_EXTRAS) return -1;
+	pad_extra[n_pad_extra].page = page;
+	pad_extra[n_pad_extra].usage = usage;
+	return n_pad_extra++;
+}
 
 /* a device let go: nothing it held is held any more */
 static void let_go(slot_t *s)
 {
 	s->connected = false;
 	if (s == KBD) release_all();
-	else ptr_buttons = 0;
+	else { ptr_buttons = 0; pad_hat = -1; pad_x = pad_y = 0; pad_buttons = 0; pad_seen = false; }
 }
 
 static void handle_report(slot_t *s, const uint8_t *report, uint16_t len)
 {
 	if (len < 1 || report[0] != 0xA1) return;		/* an input report */
 	if (s->boot_mode)	/* the layout every keyboard has in boot mode */
-		parse_report(btstack_hid_get_boot_descriptor_data(), btstack_hid_get_boot_descriptor_len(), report + 1, len - 1);
+		parse_report(s, btstack_hid_get_boot_descriptor_data(), btstack_hid_get_boot_descriptor_len(), report + 1, len - 1);
 	else if (s->descriptor_ok)	/* the device's own layout, once it has given it */
-		parse_report(hid_descriptor_storage_get_descriptor_data(s->cid), hid_descriptor_storage_get_descriptor_len(s->cid),
+		parse_report(s, hid_descriptor_storage_get_descriptor_data(s->cid), hid_descriptor_storage_get_descriptor_len(s->cid),
 		             report + 1, len - 1);
 }
 
 /* a report from a BLE device: as from a classic one, without the A1 */
 static void handle_le_report(slot_t *s, uint8_t service, const uint8_t *report, uint16_t len)
 {
-	parse_report(hids_host_descriptor_storage_get_descriptor_data(s->hids_cid, service),
+	parse_report(s, hids_host_descriptor_storage_get_descriptor_data(s->hids_cid, service),
 	             hids_host_descriptor_storage_get_descriptor_len(s->hids_cid, service), report, len);
 }
 
-static void parse_report(const uint8_t *desc, uint16_t desc_len, const uint8_t *report, uint16_t len)
+static void parse_report(slot_t *slot, const uint8_t *desc, uint16_t desc_len, const uint8_t *report, uint16_t len)
 {
 	if (!desc || !desc_len || !len) return;
 	btstack_hid_parser_t parser;
@@ -545,14 +572,38 @@ static void parse_report(const uint8_t *desc, uint16_t desc_len, const uint8_t *
 	int n = 0;
 	bool any = false, pointer = false;
 	int32_t px = 0, py = 0, pw = 0, pb = 0;
+	/* a gamepad: a hat switch, and axes that run from 0 up (a mouse's run
+	   either way round 0, and relative) */
+	bool hat_seen = false, abs_axes = false, extra_seen = false;
+	int hat = -1, ax = 0, ay = 0;
+	uint32_t pad_b = 0;
 	while (btstack_hid_parser_has_more(&parser)) {
 		uint16_t page, usage;
 		int32_t value;
 		btstack_hid_parser_get_field(&parser, &page, &usage, &value);
-		/* a mouse, or a keyboard's trackpad */
+		int lmin = parser.descriptor_usage_item.global_logical_minimum;
+		int bits = parser.descriptor_usage_item.size;
+		if (page == 0x01 && usage == 0x39) {		/* hat switch */
+			hat_seen = true;
+			hat = gamepad_hat(value, lmin);
+			continue;
+		}
+		if (page == 0x09 && usage >= 1 && usage <= 16) { if (value) pad_b |= 1u << (usage - 1); }
+		else if (slot == MOUSE && page != 0x07 && page != 0x00 && !(page == 0x01 && (usage == 0x30 || usage == 0x31 || usage == 0x38))) {
+			/* a trigger, a consumer key (Home, Back), a vendor key: a button,
+			   an axis counting once it is pushed most of the way */
+			bool axis = page == 0x01 && usage >= 0x32 && usage <= 0x37;
+			bool on = axis ? gamepad_axis(value, lmin, bits) > GP_STICK_ZONE : value != 0;
+			int e = pad_extra_bit(page, usage);
+			if (e >= 0 && on) pad_b |= 1u << (GP_EXTRA_FIRST + e);
+			extra_seen = true;
+		}
+		/* a mouse, or a keyboard's trackpad (or a gamepad's stick) */
 		if (page == 0x01 && (usage == 0x30 || usage == 0x31 || usage == 0x38)) {
 			pointer = true;
-			if (usage == 0x30) px = value; else if (usage == 0x31) py = value; else pw = value;
+			if (usage == 0x30) { px = value; ax = gamepad_axis(value, lmin, bits); if (lmin >= 0) abs_axes = true; }
+			else if (usage == 0x31) { py = value; ay = gamepad_axis(value, lmin, bits); if (lmin >= 0) abs_axes = true; }
+			else pw = value;
 			continue;
 		}
 		if (page == 0x09 && usage >= 1 && usage <= 8) { pointer = true; if (value) pb |= 1 << (usage - 1); continue; }
@@ -562,6 +613,19 @@ static void parse_report(const uint8_t *desc, uint16_t desc_len, const uint8_t *
 		if (usage && n < HELD_MAX) keys[n++] = (uint8_t)usage;
 	}
 	if (any) keys_now(m, keys, n);		/* (a report from another page, e.g. media keys, changes nothing) */
+	if (slot == MOUSE && (hat_seen || abs_axes)) pad_seen = true;
+	if (slot == MOUSE && pad_seen) {
+		int n = len > (uint16_t)sizeof pad_last ? (int)sizeof pad_last : len;
+		memcpy(pad_last, report, n);
+		pad_last_len = n;
+	}
+	if (slot == MOUSE && pad_seen) {	/* a gamepad: its own state, not a mouse's */
+		if (hat_seen || abs_axes || pointer || pad_b || extra_seen) {
+			pad_reports++;
+			pad_hat = hat, pad_x = ax, pad_y = ay, pad_buttons = pad_b;
+		}
+		return;
+	}
 	if (pointer) {
 		ptr_reports++;
 		ptr_x += px, ptr_y += py, ptr_wheel += pw, ptr_buttons = pb;
@@ -587,6 +651,24 @@ bool btkbd_mouse(int *dx, int *dy, int *wheel, int *buttons)
 	bool any = *dx || *dy || *wheel || b != took_b;
 	took_x = x, took_y = y, took_w = w, took_b = b;
 	return any;
+}
+
+bool btkbd_gamepad(btkbd_pad_t *p)
+{
+	lock();
+	p->hat = pad_hat, p->x = pad_x, p->y = pad_y, p->buttons = pad_buttons, p->reports = pad_reports;
+	bool seen = pad_seen;
+	memcpy(p->last, pad_last, sizeof p->last);
+	p->last_len = pad_last_len;
+	unlock();
+	return seen;
+}
+
+bool btkbd_gamepad_extra(int i, unsigned *page, unsigned *usage)
+{
+	if (i < 0 || i >= n_pad_extra) return false;
+	*page = pad_extra[i].page, *usage = pad_extra[i].usage;
+	return true;
 }
 
 /* ------------------------------------------------------------ connecting */
@@ -794,7 +876,7 @@ static bool ad_is_hid(const uint8_t *ad, uint8_t len)
 {
 	if (ad_data_contains_uuid16(len, ad, ORG_BLUETOOTH_SERVICE_HUMAN_INTERFACE_DEVICE)) return true;
 	uint16_t a = ad_appearance(ad, len);
-	return a == 0x03C0 || a == 0x03C1 || a == 0x03C2;
+	return a == 0x03C0 || a == 0x03C1 || a == 0x03C2 || a == 0x03C3 || a == 0x03C4;
 }
 
 static void le_advert(const uint8_t *packet)
@@ -824,6 +906,7 @@ static void le_advert(const uint8_t *packet)
 		uint16_t a = ad_appearance(ad, len);	/* (it may be in the scan response) */
 		if (a == 0x03C1) found[i].kind = BTKBD_KEYBOARD;
 		if (a == 0x03C2) found[i].kind = BTKBD_MOUSE;
+		if (a == 0x03C3 || a == 0x03C4) { found[i].kind = BTKBD_MOUSE; found[i].pad = true; }	/* joystick, gamepad */
 		ad_name(ad, len, found[i].name, sizeof found[i].name);
 		return;
 	}
@@ -988,6 +1071,9 @@ static void packet_handler(uint8_t type, uint16_t channel, uint8_t *packet, uint
 		found[i].clock = gap_event_inquiry_result_get_clock_offset(packet);
 		/* a keyboard (or one with a trackpad too), a mouse, or neither */
 		found[i].kind = (cod & 0xC0) == 0x80 ? BTKBD_MOUSE : (cod & 0x40) ? BTKBD_KEYBOARD : -1;
+		/* minor class bits 2-5: 1 joystick, 2 gamepad */
+		found[i].pad = (cod & 0xC0) == 0 && (((cod >> 2) & 0xF) == 1 || ((cod >> 2) & 0xF) == 2);
+		if (found[i].pad) found[i].kind = BTKBD_MOUSE;
 		found[i].named = gap_event_inquiry_result_get_name_available(packet);
 		if (found[i].named) {
 			int n = gap_event_inquiry_result_get_name_len(packet);
@@ -1292,6 +1378,7 @@ int btkbd_found(void) { return n_found; }
 const char *btkbd_found_name(int i) { return i >= 0 && i < n_found ? found[i].name : ""; }
 bool btkbd_found_le(int i) { return i >= 0 && i < n_found && found[i].le; }
 int btkbd_found_kind(int i) { return i >= 0 && i < n_found ? found[i].kind : -1; }
+bool btkbd_found_pad(int i) { return i >= 0 && i < n_found && found[i].pad; }
 
 void btkbd_pair_as(int i, btkbd_device_t d)
 {

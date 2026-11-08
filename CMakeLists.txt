@@ -20,9 +20,11 @@ set(SHELL_CORE_SOURCES
     src/core/clock.c
     src/core/editor_file.c
     src/core/fat.c
+    src/core/gamepad.c
     src/core/editor_pattern.c
     src/core/files.c
     src/core/history.c
+    src/core/httpd.c
     src/core/input.c
     src/core/keys.c
     src/core/line.c
@@ -37,6 +39,7 @@ set(SHELL_CORE_SOURCES
     src/core/text.c
     src/core/uf2.c
     src/core/vars.c
+    src/core/web.c
 )
 # ...the UNIX flavour's command language, vi and font...
 set(SHELL_UNIX_SOURCES
@@ -400,6 +403,35 @@ else()
     pico_enable_stdio_usb(clock-test 0)
     pico_add_extra_outputs(clock-test)
 
+    # A program that shows what the shell gave it, from flash and from RAM:
+    # the board check of program arguments, and the proof the record survives
+    # the link's --gc-sections (design.md §3.5).
+    foreach(t args-test args-ram)
+        add_executable(${t}
+            test/pico/args_test.c
+            src/port/diskio.c
+            src/port/kbd.c
+            src/port/lcd.c
+            src/port/screen.c
+            src/port/sd.c
+            src/port/southbridge.c
+        )
+        target_include_directories(${t} PRIVATE include src/port)
+        target_compile_options(${t} PRIVATE ${SHELL_WARNINGS})
+        target_compile_definitions(${t} PRIVATE
+            PICO_SHELL_LCD_SPI_HZ=${PICO_SHELL_LCD_SPI_HZ}
+            PICO_CLOCK_ADJUST_PERI_CLOCK_WITH_SYS_CLOCK=1
+            PICO_DEFAULT_UART=0
+            PICO_DEFAULT_UART_TX_PIN=2
+            PICO_DEFAULT_UART_RX_PIN=3
+        )
+        target_link_libraries(${t} shell_core pico_stdlib hardware_dma hardware_i2c hardware_spi)
+        pico_enable_stdio_uart(${t} 1)
+        pico_enable_stdio_usb(${t} 0)
+        pico_add_extra_outputs(${t})
+    endforeach()
+    pico_set_binary_type(args-ram no_flash)
+
     # A flash program that sets the DS3231's EOSC, so the chip loses its
     # time at the next power-off: the board check of a PicoCalc with no
     # clock source, where the chip cannot be taken out (design.md §3.8).
@@ -547,6 +579,55 @@ else()
         pico_enable_stdio_usb(mouse-test 0)
         pico_add_extra_outputs(mouse-test)
         target_link_options(mouse-test PRIVATE -Wl,--print-memory-usage)
+
+        # The Bluetooth gamepad (the 8BitDo M30): gamepad-test tries every
+        # key and pairs it, pad-game moves a ship with it. Both share
+        # test/pico/pad_common.h and are built as mouse-test is.
+        foreach(prog gamepad-test:gamepad_test pad-game:pad_game)
+            string(REPLACE ":" ";" parts ${prog})
+            list(GET parts 0 pname)
+            list(GET parts 1 psrc)
+            add_executable(${pname}
+                test/pico/${psrc}.c
+                src/port/cyw43_fw.c
+                src/port/diskio.c
+                src/port/kbd.c
+                src/port/lcd.c
+                src/port/screen.c
+                src/port/sd.c
+                src/port/southbridge.c
+            )
+            pico_set_binary_type(${pname} no_flash)
+            pico_set_program_name(${pname} "${pname}")
+            target_include_directories(${pname} PRIVATE include src/port test/pico)
+            target_compile_definitions(${pname} PRIVATE
+                PICO_SHELL_UART=${PICO_SHELL_UART_ON}
+                PICO_SHELL_LCD_SPI_HZ=${PICO_SHELL_LCD_SPI_HZ}
+                PICO_CLOCK_ADJUST_PERI_CLOCK_WITH_SYS_CLOCK=1
+                PICO_DEFAULT_UART=0
+                PICO_DEFAULT_UART_TX_PIN=2
+                PICO_DEFAULT_UART_RX_PIN=3
+            )
+            target_link_libraries(${pname}
+                shell_core
+                shell_btkbd
+                cyw43_fw_stream
+                pico_stdlib
+                hardware_dma
+                hardware_i2c
+                hardware_spi
+            )
+            if (PICO_SHELL_HDMI)
+                target_sources(${pname} PRIVATE src/port/mirror.c)
+                pico_generate_pio_header(${pname} ${CMAKE_CURRENT_LIST_DIR}/src/port/mirror.pio)
+                target_compile_definitions(${pname} PRIVATE PICO_SHELL_HDMI=1 MIRROR_HZ=${PICO_SHELL_HDMI_HZ})
+                target_link_libraries(${pname} hardware_pio)
+            endif()
+            pico_enable_stdio_uart(${pname} ${PICO_SHELL_UART_ON})
+            pico_enable_stdio_usb(${pname} 0)
+            pico_add_extra_outputs(${pname})
+            target_link_options(${pname} PRIVATE -Wl,--print-memory-usage)
+        endforeach()
     endif()
 
     # ntp.uf2, for /pico2-apps/ in the W build: Wi-Fi and NTP in a RAM
@@ -594,6 +675,63 @@ else()
         pico_enable_stdio_usb(ntp 0)
         pico_add_extra_outputs(ntp)
         target_link_options(ntp PRIVATE -Wl,--print-memory-usage)
+
+        # web.uf2: the card on the network, from a browser, in a RAM
+        # program of its own, which the shell's `web` runs (design.md
+        # §3.9). The same rules as ntp.uf2: it links the CYW43 driver
+        # under the owner's section 7 permission, so nothing from UF2
+        # Loader or another GPL-3.0 author.
+        # The page, gzipped into a header (src/web/embed.cmake).
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/web/web_page.h
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/web
+            COMMAND ${CMAKE_COMMAND} -DIN=${CMAKE_CURRENT_SOURCE_DIR}/src/web/index.html
+                    -DOUT=${CMAKE_CURRENT_BINARY_DIR}/web/web_page.h
+                    -P ${CMAKE_CURRENT_SOURCE_DIR}/src/web/embed.cmake
+            DEPENDS src/web/index.html src/web/embed.cmake
+            COMMENT "Embedding the web page"
+        )
+        add_executable(web
+            src/web/main.c
+            ${CMAKE_CURRENT_BINARY_DIR}/web/web_page.h
+            src/port/clock.c
+            src/port/diskio.c
+            src/port/ds3231.c
+            src/port/kbd.c
+            src/port/lcd.c
+            src/port/screen.c
+            src/port/sd.c
+            src/port/southbridge.c
+        )
+        pico_set_binary_type(web no_flash)
+        pico_set_program_name(web "web")
+        pico_set_program_description(web "A web file manager for the PicoCalc's card")
+        target_include_directories(web PRIVATE src/web src/port include ${CMAKE_CURRENT_BINARY_DIR}/web)
+        target_compile_options(web PRIVATE ${SHELL_WARNINGS})
+        target_compile_definitions(web PRIVATE
+            PICO_SHELL_UART=${PICO_SHELL_UART_ON}
+            PICO_SHELL_LCD_SPI_HZ=${PICO_SHELL_LCD_SPI_HZ}
+            PICO_CLOCK_ADJUST_PERI_CLOCK_WITH_SYS_CLOCK=1
+            PICO_DEFAULT_UART=0
+            PICO_DEFAULT_UART_TX_PIN=2
+            PICO_DEFAULT_UART_RX_PIN=3
+            CYW43_HOST_NAME="picocalc"
+        )
+        target_link_libraries(web
+            shell_core
+            pico_stdlib
+            pico_rand
+            pico_cyw43_arch_lwip_poll
+            pico_lwip_mdns
+            hardware_dma
+            hardware_i2c
+            hardware_powman
+            hardware_spi
+        )
+        pico_enable_stdio_uart(web ${PICO_SHELL_UART_ON})
+        pico_enable_stdio_usb(web 0)
+        pico_add_extra_outputs(web)
+        target_link_options(web PRIVATE -Wl,--print-memory-usage)
     endif()
 
     # Memory use on every build (design.md §7, EL §2.1).
