@@ -4,10 +4,13 @@
 # commit. The header is rewritten only when the text changes, so an
 # unchanged tree does not rebuild what includes it.
 #
+# Only tags of three numbers (v1.0.0, v0.2.0-beta) count: this repository also
+# holds picocalc-shell's v1.0 to v1.3, which are not this program's versions.
+#
 #   cmake -DSRC=<source dir> -DOUT=<header> -P version.cmake
 
 execute_process(
-    COMMAND git describe --always --dirty
+    COMMAND git describe --always --dirty --match v[0-9]*.[0-9]*.[0-9]*
     WORKING_DIRECTORY ${SRC}
     OUTPUT_VARIABLE version
     OUTPUT_STRIP_TRAILING_WHITESPACE
