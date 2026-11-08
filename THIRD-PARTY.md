@@ -32,11 +32,13 @@ The same licence as this project, and the same owner.
 | `test/host/test_util.h` | the same | the include guard |
 | `tools/build.sh`, `uart-log.sh`, `uart-type.sh`, `uart-screen.sh` | `tools/` | names, keys and pacing |
 
-## PicoMultiLoader — GPL-3.0, the owner's
+## PicoMultiLoader — GPL-3.0, Luciano Faria
 
-The same licence as this project, and the same owner (who confirmed on
-2026-10-30 that the code may be taken). The web file manager (design.md
-§3.9) follows its `rp2xxx/src/webserver.c` and keeps its page and API.
+<https://github.com/hexadevti/PicoMultiLoader>, by Luciano Faria, under the
+GPL-3.0, the same licence as this project (it was confirmed on 2026-10-30
+that the code may be taken). **The web application (`web.uf2`, the web file
+manager) is taken from this repository**: its `rp2xxx/src/webserver.c` is
+the model of the server, and its page and API are kept (design.md §3.9).
 
 | Here | From PicoMultiLoader | Changes |
 |---|---|---|

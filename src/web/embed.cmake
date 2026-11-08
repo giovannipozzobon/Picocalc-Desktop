@@ -1,7 +1,7 @@
 # Gzip a web page into a C header:
 #   cmake -DIN=index.html -DOUT=web_page.h -P embed.cmake
 # The header defines `web_page`, gzip data to be served with
-# Content-Encoding: gzip. After PicoMultiLoader's embed.cmake (the owner's,
+# Content-Encoding: gzip. After PicoMultiLoader's embed.cmake (Luciano Faria's,
 # GPL-3.0; THIRD-PARTY.md).
 set(gz "${OUT}.gz")
 file(ARCHIVE_CREATE OUTPUT "${gz}" PATHS "${IN}" FORMAT raw COMPRESSION GZip COMPRESSION_LEVEL 9)
