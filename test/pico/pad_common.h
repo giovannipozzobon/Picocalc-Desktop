@@ -3,9 +3,9 @@
  * radio, the gamepad's state, and the way back to the shell. Included by
  * each program; not a library.
  *
- * Both programs start Bluetooth and read the gamepad paired in the mouse's
- * place (btkbd.h). It is paired from gamepad-test's page P: Search, then
- * the number of the pad. They need /bluetooth/cyw43-fw.bin on the card, as
+ * Both programs start Bluetooth and read the gamepad paired in its own place,
+ * beside the keyboard and the mouse (btkbd.h). It is paired with btpair, or
+ * from gamepad-test's page P: Search, then the number of the pad. They need /bluetooth/cyw43-fw.bin on the card, as
  * mouse-test does. */
 #ifndef PAD_COMMON_H
 #define PAD_COMMON_H
@@ -158,11 +158,12 @@ static inline int pad_key(void) {
     return 0;
 }
 
-/* The gamepad now: false until it has sent a report. */
+/* The gamepad now, and how many reports have come: false until the first. */
+static unsigned s_pad_reports;
 static inline bool pad_state(gamepad_t *g, btkbd_pad_t *raw) {
-    bool seen = btkbd_gamepad(raw);
+    if (btkbd_gamepad(raw)) s_pad_reports++;
     gamepad_set(g, raw->hat, raw->x, raw->y, raw->buttons);
-    return seen;
+    return s_pad_reports != 0;
 }
 
 static const char *const pad_state_names[] = {

@@ -43,7 +43,7 @@ int main(void) {
     CHECK(g.buttons == 0x0805, "buttons kept");
 
     gamepad_set(&g, -1, 0, 0, 0x80010001u);
-    CHECK(g.buttons == 0x80010001u, "extra buttons 17-32 kept");
+    CHECK(g.buttons == 0x80010001u, "buttons 17-32 kept");
 
     /* keys */
     gamepad_keys_t k;

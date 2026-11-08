@@ -100,16 +100,20 @@ movement and buttons are not used yet.
 In the Pico 2 W build, a Bluetooth gamepad (written for the 8BitDo M30 in
 its D-input mode) works as keys: the D-pad (or the stick) is the arrows,
 repeating when held; button 1 (A) is Enter, button 2 (B) Esc, Select Tab,
-Start Enter. It is paired in the mouse's place, so a gamepad and a mouse
-cannot both be used. Pair it with the `gamepad-test` program (page P: `s`
-searches, then the pad's number), which also tries every key of the pad;
-`pad-game` moves a ship with it. Both are in `/pico2-apps/`. The button
-numbers are as the pad's report gives them (`src/core/gamepad.h` has the
-roles). Tried on the board with an M30: the D-pad and the main buttons
-work. C, R and the heart button are reported as extra buttons 17-32 (any
-other field of the report is one, in the order the pad lists them) and
-have no role yet; the star button sends nothing. `gamepad-test` page A
-lists each extra's report field, page B lights its number.
+Start Enter. It is paired in its own place, beside the keyboard and the mouse, so all
+three can be used together. Pair it with `btpair` (2.2) or with the
+`gamepad-test` program (page P: `s` searches, then the pad's number),
+which also tries every key of the pad; `pad-game` moves a ship with it.
+Both programs are in `/pico2-apps/`. The button numbers are as the pad's
+report gives them, up to 32 (`src/core/gamepad.h` has the roles). Tried
+on the board with an M30 (D-pad and main buttons, before the pad had its
+own place). Its other keys are not buttons in the report: C and R are
+analog triggers (10 bits, 0 to 1023; C reads as `rz`), the heart is the
+Generic Desktop "System Main Menu" key (page 1, usage 0x85), which
+`gamepad-test` shows as `x1`, and the star sends nothing. None of the four
+has a role yet. Page A of `gamepad-test` shows the sticks, the triggers,
+the extra keys with their page and usage, and the last report's bytes.
+The separate place is tested on the host and built only.
 
 ### The PicoCalc's own keys
 

@@ -2,7 +2,7 @@
  *
  * btkbd.c reads a gamepad's HID reports (hat switch, two axes, buttons) and
  * hands the raw values to gamepad_set(), which gives one state: the four
- * directions and up to 16 buttons. gamepad_keys() turns a state into key
+ * directions and up to 32 buttons. gamepad_keys() turns a state into key
  * presses for the shell, with auto-repeat on the directions.
  *
  * Written for the 8BitDo M30 (a Sega-style pad: D-pad, A B C X Y Z, Start,
@@ -36,13 +36,9 @@
 /* a stick counts as a direction beyond this far from the centre (of 127) */
 #define GP_STICK_ZONE 64
 
-/* extra buttons: any other field of the report (a trigger, a consumer key, a
-   vendor key) is a button in bits 16-31, in the order the descriptor lists them */
-#define GP_EXTRA_FIRST 16
-
 typedef struct {
     uint8_t  dirs;       /* GP_UP | GP_DOWN | GP_LEFT | GP_RIGHT */
-    uint32_t buttons;    /* bit n: HID button n+1 held (0-15); 16-31: other fields of the report, see btkbd.h */
+    uint32_t buttons;    /* bit n: HID button n+1 held (up to 32) */
 } gamepad_t;
 
 /* The raw values of one report. hat: 0-7 clockwise from up, or -1 for the

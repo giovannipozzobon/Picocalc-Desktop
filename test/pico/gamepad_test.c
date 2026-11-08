@@ -7,12 +7,13 @@
  * pad's pairing key until its light flashes; its manual has the combination
  * for the mode you want, D-input is the one with a hat and buttons), go to
  * page P and press s, then the number of the pad. The pairing is kept on the
- * card, in the place btpair gives to a mouse: the pad is the "mouse".
+ * card, in the gamepad's own place (btpair pairs it too), so a mouse and a pad
+ * can be used together.
  *
  *   A  the numbers: the radio's state, the pad's name, the last raw report
- *      (hat, stick, the button mask), the directions it makes, how many
+ *      (hat, sticks, triggers, the button mask), the directions it makes, how many
  *      reports come a second.
- *   B  every key drawn: the four directions and 16 buttons light up while
+ *   B  every key drawn: the four directions and 32 buttons light up while
  *      held, and a mark stays on each one that has been pressed, so that one
  *      pass over the pad shows what is missing. c clears the marks.
  *   P  pairing: s searches, 1-8 pairs the pad found, f forgets the pad.
@@ -44,11 +45,11 @@ static void clear_seen(void) {
 static void page_a(const gamepad_t *g, const btkbd_pad_t *raw, bool seen) {
     struct mallinfo mi = mallinfo();
     put(0, "gamepad-test A numbers Tab page Esc exit");
-    put(2, "Pad:   %s", pad_state_name(btkbd_device_state(BTKBD_MOUSE)));
-    put(3, "       '%.28s'", btkbd_device_name(BTKBD_MOUSE));
-    put(4, "Reports: %s, %u, %u a second", seen ? "a pad" : "none yet", raw->reports, s_rate);
+    put(2, "Pad:   %s", pad_state_name(btkbd_device_state(BTKBD_GAMEPAD)));
+    put(3, "       '%.28s'", btkbd_device_name(BTKBD_GAMEPAD));
+    put(4, "Reports: %s, %u, %u a second", seen ? "a pad" : "none yet", s_pad_reports, s_rate);
     put(6, "hat    %d  (-1 neutral, 0 up, clockwise)", raw->hat);
-    put(7, "stick  x %+4d  y %+4d", raw->x, raw->y);
+    put(7, "L x %+4d y %+4d  R z %+4d rz %+4d", raw->x, raw->y, raw->z, raw->rz);
     put(8, "buttons 0x%08lX", (unsigned long)raw->buttons);
     put(10, "directions  %c %c %c %c  (U D L R)", g->dirs & GP_UP ? 'U' : '.', g->dirs & GP_DOWN ? 'D' : '.',
         g->dirs & GP_LEFT ? 'L' : '.', g->dirs & GP_RIGHT ? 'R' : '.');
@@ -62,24 +63,28 @@ static void page_a(const gamepad_t *g, const btkbd_pad_t *raw, bool seen) {
     put(11, "held: %s", list);
     put(13, "In the shell: button %d Enter, %d Esc,", GP_BTN_FIRE + 1, GP_BTN_FIRE2 + 1);
     put(14, "%d Tab, %d Enter.", GP_BTN_SELECT + 1, GP_BTN_START + 1);
-    char hex[COLS] = "";
-    for (int i = 0; i < raw->last_len && i < 12; i++) {
-        char h[4];
-        snprintf(h, sizeof h, "%02X ", raw->last[i]);
-        strcat(hex, h);
-    }
-    put(16, "report: %s", hex);
-    /* the extra buttons 17-32 (bits 16-31): which field of the report each is */
-    for (int i = 0; i < 8; i++) {
+    put(16, "rx %+4d ry %+4d", raw->rx, raw->ry);
+    put(17, "triggers: brake %3u gas %3u", raw->brake, raw->gas);
+    /* the other fields of the report: which page:usage each is, and held now */
+    for (int i = 0; i < 4; i++) {
         unsigned pg, us, pg2, us2;
         char l[COLS] = "";
         if (btkbd_gamepad_extra(2 * i, &pg, &us)) {
-            snprintf(l, sizeof l, "%2d=%04X:%04X", GP_EXTRA_FIRST + 2 * i + 1, pg, us);
+            snprintf(l, sizeof l, "x%d%c %04X:%04X", 2 * i + 1, raw->extra >> (2 * i) & 1 ? '*' : ' ', pg, us);
             if (btkbd_gamepad_extra(2 * i + 1, &pg2, &us2))
-                snprintf(l + strlen(l), sizeof l - strlen(l), "  %2d=%04X:%04X", GP_EXTRA_FIRST + 2 * i + 2, pg2, us2);
+                snprintf(l + strlen(l), sizeof l - strlen(l), "  x%d%c %04X:%04X", 2 * i + 2,
+                         raw->extra >> (2 * i + 1) & 1 ? '*' : ' ', pg2, us2);
         }
-        put(18 + i, "%s", l);
+        put(19 + i, "%s", l);
     }
+    uint8_t rep[16];
+    int rn = btkbd_gamepad_report(rep, 16);
+    char hex[COLS] = "";
+    for (int i = 0; i < rn && i < 8; i++) { char h[4]; snprintf(h, sizeof h, "%02X ", rep[i]); strcat(hex, h); }
+    put(23, "report %2d bytes: %s", rn, hex);
+    hex[0] = '\0';
+    for (int i = 8; i < rn; i++) { char h[4]; snprintf(h, sizeof h, "%02X ", rep[i]); strcat(hex, h); }
+    put(24, "                 %s", hex);
     put(27, "heap %d bytes taken", mi.uordblks);
     put(28, "The radio: %.28s", btkbd_status());
     flush();
@@ -103,7 +108,7 @@ static void page_b(const gamepad_t *g) {
     cell(PAD_ROW + 2, 5, " LEFT ", g->dirs & GP_LEFT, s_seen_dirs & GP_LEFT);
     cell(PAD_ROW + 2, 20, " RIGHT ", g->dirs & GP_RIGHT, s_seen_dirs & GP_RIGHT);
     cell(PAD_ROW + 4, 11, " DOWN ", g->dirs & GP_DOWN, s_seen_dirs & GP_DOWN);
-    put(BTN_ROW - 1, "buttons (17+ are the page A list):");
+    put(BTN_ROW - 1, "buttons, as the pad numbers them:");
     for (int i = 0; i < 32; i++) {
         char n[8];
         snprintf(n, sizeof n, " %2d ", i + 1);
@@ -124,13 +129,13 @@ static void page_b(const gamepad_t *g) {
 static void page_p(void) {
     put(0, "gamepad-test P pairing   Tab page");
     put(2, "s search, 1-8 pair that one, f forget");
-    put(4, "Pad now: %s", pad_state_name(btkbd_device_state(BTKBD_MOUSE)));
-    put(5, "         '%.28s'", btkbd_device_name(BTKBD_MOUSE));
+    put(4, "Pad now: %s", pad_state_name(btkbd_device_state(BTKBD_GAMEPAD)));
+    put(5, "         '%.28s'", btkbd_device_name(BTKBD_GAMEPAD));
     put(7, "Found:");
     int n = btkbd_found();
     for (int i = 0; i < 8; i++) {
         if (i < n)
-            put(8 + i, "%d %c%c %.30s", i + 1, btkbd_found_pad(i) ? 'P' : ' ', btkbd_found_le(i) ? 'L' : ' ',
+            put(8 + i, "%d %c%c %.30s", i + 1, (btkbd_found_kind(i) == BTKBD_GAMEPAD) ? 'P' : ' ', btkbd_found_le(i) ? 'L' : ' ',
                 btkbd_found_name(i));
         else
             put(8 + i, "");
@@ -164,7 +169,7 @@ int main(void) {
     sleep_ms(1500);
 
     gamepad_t g = { 0, 0 };
-    btkbd_pad_t raw = { -1, 0, 0, 0, 0 };
+    btkbd_pad_t raw = { .hat = -1 };
     bool seen = false;
     enter(PAGE_A, &g, &raw, seen);
 
@@ -187,8 +192,8 @@ int main(void) {
 
         if (now >= next_rate) {
             next_rate = now + 1000000u;
-            s_rate = raw.reports - rate_base;
-            rate_base = raw.reports;
+            s_rate = s_pad_reports - rate_base;
+            rate_base = s_pad_reports;
         }
         if (s_page != PAGE_B && now >= next_text) {
             next_text = now + TEXT_US;
@@ -204,8 +209,8 @@ int main(void) {
                 page_b(&g);
             } else if (s_page == PAGE_P) {
                 if (k == 's') btkbd_search();
-                else if (k == 'f') btkbd_forget_device(BTKBD_MOUSE);
-                else if (k >= '1' && k <= '8') btkbd_pair_as(k - '1', BTKBD_MOUSE);
+                else if (k == 'f') btkbd_forget_device(BTKBD_GAMEPAD);
+                else if (k >= '1' && k <= '8') btkbd_pair_as(k - '1', BTKBD_GAMEPAD);
                 page_p();
             }
         }

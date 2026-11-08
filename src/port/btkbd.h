@@ -17,9 +17,7 @@
  *
  * A Bluetooth mouse can be paired too, alongside the keyboard: btkbd_mouse()
  * gives its movement. (A keyboard's own trackpad comes out of it as well.)
- *
- * A Bluetooth gamepad (the 8BitDo M30, say) is paired in the mouse's place,
- * and btkbd_gamepad() gives what it holds; see "gamepad" below.
+ * And a gamepad, alongside both: btkbd_gamepad() gives its sticks and buttons.
  *
  * Both kinds of keyboard work: "classic" Bluetooth ones, and Bluetooth Low
  * Energy (BLE) ones, which speak HID over GATT.
@@ -28,7 +26,7 @@
  * program; other programs only reconnect, and needn't call btkbd_poll().
  *
  * The pairings are kept on the SD card, in /bluetooth/pairing.dat (btstore.h),
- * so every program that uses this finds the same keyboard and mouse. The
+ * so every program that uses this finds the same keyboard, mouse and gamepad. The
  * radio's firmware is read from /bluetooth/cyw43-fw.bin (cyw43_fw.h).
  *
  *     files_mount();
@@ -52,7 +50,25 @@ typedef enum {
 	BTKBD_CONNECTED,
 } btkbd_state_t;
 
-typedef enum { BTKBD_KEYBOARD, BTKBD_MOUSE } btkbd_device_t;
+typedef enum { BTKBD_KEYBOARD, BTKBD_MOUSE, BTKBD_GAMEPAD } btkbd_device_t;
+
+/* a gamepad (or joystick) as it is now */
+typedef struct {
+	uint32_t buttons;		/* bit 0 is button 1, and so on (up to 32) */
+	int8_t x, y;			/* the left stick: -127..127, 0 in the middle, */
+	int8_t z, rz;			/*   the right stick on most gamepads, */
+	int8_t rx, ry;			/*   or here on some (as HID numbers them) */
+	uint8_t brake, gas;		/* triggers that report as these: 0..255 */
+	int8_t hat;			/* the D-pad: -1 none, 0 up, 1 up-right, ... 7 up-left */
+	/* (picocalc_desktop's own) any other field of its reports, as a button:
+	   a vendor or consumer key (Home, Back). Bit i is the i-th such field the
+	   report listed, whose page and usage btkbd_gamepad_extra() gives. */
+	uint16_t extra;
+} btkbd_pad_t;
+/* the bytes of the gamepad's last report, as they came (for testing); how many */
+int btkbd_gamepad_report(uint8_t *buf, int max);
+/* the page and usage of extra field i of btkbd_pad_t; false if there is no such field (yet) */
+bool btkbd_gamepad_extra(int i, unsigned *page, unsigned *usage);
 
 /* start the radio; reconnects to the keyboard paired before, if any */
 bool btkbd_init(void);
@@ -75,34 +91,19 @@ const char *btkbd_device_name(btkbd_device_t d);
    anything changed */
 bool btkbd_mouse(int *dx, int *dy, int *wheel, int *buttons);
 
-/* A gamepad, paired as the mouse (the second device is one or the other).
- * It is told from a mouse by its reports: a hat switch, or axes that run from
- * 0 up. Returns false until it has sent one. hat: 0-7 clockwise from up, or
- * -1 neutral; x, y: its stick, -128..127 (y down is positive); buttons: bit n
- * is HID button n+1; reports: how many have come. gamepad.h turns these into
- * directions and keys. */
-typedef struct {
-	int hat, x, y;
-	uint32_t buttons;	/* bits 0-15: HID buttons 1-16; 16-31: the report's other fields (below) */
-	unsigned reports;
-	uint8_t last[16];	/* the first bytes of the last report, as it came */
-	int last_len;
-} btkbd_pad_t;
-/* What the extra button i (bit 16 + i) is: a field of the report that is not
-   a hat, a stick, a button 1-16 or a key: its usage page and usage (a
-   trigger is 0001:0032 or 0035, Home 000C:0223, a vendor key FF00:xxxx).
-   False if there is no such extra yet. */
-bool btkbd_gamepad_extra(int i, unsigned *page, unsigned *usage);
-bool btkbd_gamepad(btkbd_pad_t *p);
+/* the gamepad, as it is now (all zero, hat -1, when none is connected); true
+   if a report has come from it since the last call. Which button is which
+   number, and which axes the right stick uses, varies from one make to
+   another: a program can let the player choose. */
+bool btkbd_gamepad(btkbd_pad_t *pad);
 
-/* pairing: search for keyboards and mice in pairing mode (about 10 seconds) */
+/* pairing: search for keyboards, mice and gamepads in pairing mode (about 10 seconds) */
 void btkbd_search(void);
 int btkbd_found(void);			/* how many found so far */
 const char *btkbd_found_name(int i);
 bool btkbd_found_le(int i);		/* a Bluetooth Low Energy one */
-bool btkbd_found_pad(int i);		/* it says it is a joystick or gamepad (pair it as BTKBD_MOUSE) */
-int btkbd_found_kind(int i);		/* what it says it is: BTKBD_KEYBOARD, BTKBD_MOUSE, or -1 */
-/* pair it as the keyboard or the mouse, replacing the one before */
+int btkbd_found_kind(int i);		/* what it says it is: BTKBD_KEYBOARD, _MOUSE, _GAMEPAD, or -1 */
+/* pair it as the keyboard, the mouse or the gamepad, replacing the one before */
 void btkbd_pair_as(int i, btkbd_device_t d);
 void btkbd_pair(int i);			/* as what it says it is (a keyboard if it doesn't say) */
 /* while pairing: what to type on the keyboard (then Enter), or NULL */
@@ -118,7 +119,7 @@ const uint8_t *btkbd_log(size_t *len, uint32_t *lost);
 /* for testing: how many mouse reports have come, the movement added up
    since the start, and the buttons held now */
 void btkbd_pointer(unsigned *reports, int *x, int *y, int *wheel, int *buttons);
-/* forget the paired keyboard, or either */
+/* forget the paired keyboard, or any one of them */
 void btkbd_forget(void);
 void btkbd_forget_device(btkbd_device_t d);
 

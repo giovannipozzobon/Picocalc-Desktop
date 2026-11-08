@@ -422,8 +422,9 @@ static void log_banner(bool clocks_ok, uint32_t i2c_hz, sb_status_t sb, const ui
  * them. */
 static uint16_t bt_source(void) {
     static int notches;   /* the wheel's, not yet sent: forward is positive */
-    /* A gamepad paired in the mouse's place: its directions are the arrows
-     * (repeating) and its buttons Enter, Esc and Tab (gamepad.h). */
+    /* The gamepad, paired in its own place beside the keyboard and the
+     * mouse: its directions are the arrows (repeating) and its buttons
+     * Enter, Esc and Tab (gamepad.h). */
     static gamepad_keys_t pad_keys;
     static bool pad_init;
     static uint8_t pad_pending[8];
@@ -431,13 +432,12 @@ static uint16_t bt_source(void) {
     if (pad_at < pad_n) return (uint16_t)(KEY_STATE_PRESSED << 8 | pad_pending[pad_at++]);
     if (!pad_init) { gamepad_keys_init(&pad_keys); pad_init = true; }
     btkbd_pad_t raw;
-    if (btkbd_gamepad(&raw)) {
-        gamepad_t g;
-        gamepad_set(&g, raw.hat, raw.x, raw.y, raw.buttons);
-        pad_n = gamepad_keys(&pad_keys, &g, to_ms_since_boot(get_absolute_time()), pad_pending, (int)sizeof pad_pending);
-        pad_at = 0;
-        if (pad_n) return (uint16_t)(KEY_STATE_PRESSED << 8 | pad_pending[pad_at++]);
-    }
+    btkbd_gamepad(&raw);    /* its state now, whether or not a report came (the keys repeat) */
+    gamepad_t g;
+    gamepad_set(&g, raw.hat, raw.x, raw.y, raw.buttons);
+    pad_n = gamepad_keys(&pad_keys, &g, to_ms_since_boot(get_absolute_time()), pad_pending, (int)sizeof pad_pending);
+    pad_at = 0;
+    if (pad_n) return (uint16_t)(KEY_STATE_PRESSED << 8 | pad_pending[pad_at++]);
     if (!notches) {
         int dx, dy, wheel, buttons;
         if (btkbd_mouse(&dx, &dy, &wheel, &buttons)) notches = wheel;

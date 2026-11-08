@@ -2,7 +2,7 @@
  * colour changed by the other buttons, and a bullet shot upward with Fire.
  *
  * Copy build/pico-w/pad-game.uf2 to /pico2-apps/, and have the pad paired
- * (gamepad-test's page P) and /bluetooth/cyw43-fw.bin on the card. Type
+ * (btpair, or gamepad-test's page P) and /bluetooth/cyw43-fw.bin on the card. Type
  * `pad-game`.
  *
  *   D-pad (or the stick)  moves the ship, 3 pixels a frame
@@ -128,7 +128,7 @@ int main(void) {
 
     gamepad_t g = { 0, 0 };
     gamepad_t was = { 0, 0 };
-    btkbd_pad_t raw = { -1, 0, 0, 0, 0 };
+    btkbd_pad_t raw = { .hat = -1 };
     bool seen = false;
     int key_dx = 0, key_dy = 0;          /* the arrow keys' nudge, for a try without a pad */
     uint64_t next_frame = time_us_64(), next_shot = 0;

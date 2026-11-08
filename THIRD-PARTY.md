@@ -51,7 +51,7 @@ Copyright (c) 2026 Chris Torkildson, under the MIT licence, which is
 compatible with the GPL-3.0. Its Bluetooth keyboard. Checked
 against v1.3 (2026-10-31): the files taken are unchanged since v1.2, and
 the fix switches of v1.3's `bluetooth.cmake` are here. `btkbd.c` and
-`btkbd.h` brought to btpair 2.1 (a keyboard and a mouse) on 2026-11-02.
+`btkbd.h` brought to btpair 2.1 (a keyboard and a mouse) on 2026-11-02, and to btpair 2.2 (a gamepad in its own slot, tags GPD0 and GPL0) on 2026-11-08.
 
 | Here | From picocalc-extras | Changes |
 |---|---|---|

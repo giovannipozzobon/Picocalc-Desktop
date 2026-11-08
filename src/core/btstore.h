@@ -29,6 +29,8 @@
 #define BT_TAG_KEYBOARD_LE 0x4B424C30u   /* "KBL0": a BLE keyboard, its address type, name */
 #define BT_TAG_MOUSE       0x50545230u   /* "PTR0": a classic mouse, the same way */
 #define BT_TAG_MOUSE_LE    0x50544C30u   /* "PTL0": a BLE mouse */
+#define BT_TAG_PAD         0x47504430u   /* "GPD0": a classic gamepad */
+#define BT_TAG_PAD_LE      0x47504C30u   /* "GPL0": a BLE gamepad */
 
 typedef struct {
     uint32_t tag;       /* 0: the record is free */
